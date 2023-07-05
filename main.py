@@ -455,7 +455,7 @@ async def embedIfunny(message):
                 f.write(chunk)
 
     try:
-        await(message.reply(file=mediaPath))
+        await(message.reply(file=discord.File(fp=mediaPath)))
         for file in os.listdir('Media'):
             os.remove(f'Media\\{file}')
     except discord.HTTPException as funny:
@@ -604,6 +604,3 @@ logger.addHandler(handler)
 handler = logging.FileHandler(filename='times.txt', encoding='utf-8', mode='w')
 client.run(token=token, log_handler=handler, log_level=logging.DEBUG)
 #client.run(token=token)
-
-
-
