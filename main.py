@@ -411,7 +411,7 @@ async def embedInstagram(message):
     try:
         await(message.reply(files=sendFiles))
         for file in os.listdir('Media'):
-            os.remove(f'Media\{file}')
+            os.remove(f'Media\\{file}')
     except discord.HTTPException as funny:
         print('something hilarious happened')
         print(funny.status)
@@ -421,6 +421,48 @@ async def embedInstagram(message):
         print(urls)
         for x in sendFiles:
             print(x.filename)
+
+        await(message.reply(content=f'Can\'t embed, {funny.text} (yikes!)'))
+
+
+async def embedIfunny(message):
+
+    ifunnyURL = ''
+    for phrase in message.content.split():
+        if phrase.__contains__('https://ifunny.co/video/'):
+            ifunnyURL = phrase
+
+    if ifunnyURL == '':
+        print('Cant find ifunny link')
+        return
+
+    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.79 Safari/537.36'}
+
+    r = requests.get(url=ifunnyURL, headers=headers)
+    response = r.content.decode(r.encoding)
+
+    urls = re.findall(r'(content="https://img\.ifunny\.co/videos/.+?\.mp4")', response)
+    cleaned = urls[0]
+    cleaned = (cleaned[9:len(cleaned) - 1]).strip()
+
+    mediaPath = f'Media/{random.randint(1, 1234567)}.mp4'
+    r = requests.get(cleaned, stream=True)
+    with open(mediaPath, 'wb') as f:
+        for chunk in r.iter_content(chunk_size=1024):
+            if chunk:
+                f.write(chunk)
+
+    try:
+        await(message.reply(file=mediaPath))
+        for file in os.listdir('Media'):
+            os.remove(f'Media\\{file}')
+    except discord.HTTPException as funny:
+        print('something hilarious happened')
+        print(funny.status)
+        print(funny.code)
+        print(funny.text)
+        print(ifunnyURL)
+        print(urls)
 
         await(message.reply(content=f'Can\'t embed, {funny.text} (yikes!)'))
 
