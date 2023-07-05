@@ -319,16 +319,15 @@ async def on_message(message):
                 await(message.delete())
             except discord.HTTPException as e:
                 await(message.reply(content=e.text))
-    else:
-        if message.content == '%usamin report text':
-            textReport = await(client.get_channel(1061735975899893850).fetch_message(1066245140894732288))
-            await(message.channel.send(content=textReport.content))
-            await(message.delete())
-        elif message.content == '%usamin report voice':
-            voiceReport = await(client.get_channel(1061735975899893850).fetch_message(1065534601558249573))
-            await(message.channel.send(content=voiceReport.content))
-            await(message.delete())
 
+    if message.content == '%usamin report text':
+        textReport = await(client.get_channel(1061735975899893850).fetch_message(1066245140894732288))
+        await(message.channel.send(content=textReport.content))
+        await(message.delete())
+    elif message.content == '%usamin report voice':
+        voiceReport = await(client.get_channel(1061735975899893850).fetch_message(1065534601558249573))
+        await(message.channel.send(content=voiceReport.content))
+        await(message.delete())
 
 
     if message.channel.name not in ignoreChannels and (message.author.name not in ignoreNames):
