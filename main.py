@@ -252,6 +252,8 @@ async def on_message(message):
 
     if message.content.__contains__('https://www.instagram.com'):
         await(embedInstagram(message))
+    elif message.content.__contains__('https://ifunny.co'):
+        await(embedIfunny(message))
 
     if message.author.name in ['dwr3k', 'Nana Abe des', 'dooki6']:
         if message.content == '%usamin textclear':
