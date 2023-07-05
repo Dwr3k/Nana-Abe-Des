@@ -253,7 +253,7 @@ async def on_message(message):
     if message.content.__contains__('https://www.instagram.com'):
         await(embedInstagram(message))
 
-    if message.author.name in ['Dwr3k', 'Nana Abe des', 'Dooki6']:
+    if message.author.name in ['dwr3k', 'Nana Abe des', 'dooki6']:
         if message.content == '%usamin textclear':
             textTimes = {}
             await(message.channel.last_message.delete())
@@ -288,14 +288,6 @@ async def on_message(message):
             resetMessage = await(client.get_channel(709263987379798097).fetch_message(1065855899886944256))
             vcTimes = ast.literal_eval(resetMessage.content)
             await(voiceMessage.edit(content=vcTimes))
-        elif message.content == '%usamin report voice':
-            textReport = await(client.get_channel(1061735975899893850).fetch_message(1066245140894732288))
-            await(message.channel.send(content=textReport.content))
-            await(message.delete())
-        elif message.content == '%usamin report text':
-            voiceReport = await(client.get_channel(1061735975899893850).fetch_message(1065534601558249573))
-            await(message.channel.send(content=voiceReport.content))
-            await(message.delete())
         elif message.content.__contains__('%usamin list constant'):
             constantMessage = await(logChannel.fetch_message(constantsID))
             await(message.reply(content=constantMessage.content))
@@ -327,6 +319,17 @@ async def on_message(message):
                 await(message.delete())
             except discord.HTTPException as e:
                 await(message.reply(content=e.text))
+    else:
+        if message.content == '%usamin report text':
+            textReport = await(client.get_channel(1061735975899893850).fetch_message(1066245140894732288))
+            await(message.channel.send(content=textReport.content))
+            await(message.delete())
+        elif message.content == '%usamin report voice':
+            voiceReport = await(client.get_channel(1061735975899893850).fetch_message(1065534601558249573))
+            await(message.channel.send(content=voiceReport.content))
+            await(message.delete())
+
+
 
     if message.channel.name not in ignoreChannels and (message.author.name not in ignoreNames):
         if getFull(message.author) not in textTimes:
@@ -411,7 +414,7 @@ async def embedInstagram(message):
         for file in os.listdir('Media'):
             os.remove(f'Media\{file}')
     except discord.HTTPException as funny:
-        print('something hilariois happened')
+        print('something hilarious happened')
         print(funny.status)
         print(funny.code)
         print(funny.text)
