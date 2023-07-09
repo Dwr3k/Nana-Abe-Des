@@ -48,10 +48,11 @@ textTimes = {}
 constantsID = 1061736393086345296  #id of constants message in #logs
 constants = {}
 
+
 logsID = 1061735975899893850
-textID = 1061738499159638186
-voiceID = 1061766911966314536
-niceTextID = 1065534601558249573
+textlog_messageID = -1
+voiceID = -1
+niceTextID = -1
 niceVoiceID = 1066245140894732288
 
 profiles = {}
@@ -64,7 +65,7 @@ global textMessage, voiceMessage, niceTextMessage, niceVoiceMessage, logChannel
 
 @client.event
 async def on_ready():
-    global vcTimes, textTimes, constants, textMessage, voiceMessage, userTimes, niceTextMessage, niceVoiceMessage, logChannel
+    global vcTimes, textTimes, constants, textMessage, voiceMessage, userTimes, niceTextMessage, niceVoiceMessage, logChannel, textlog_messageID, niceTextID, voiceID
     runTime = time.time()
     print('Connected to Discord')
     print(f'found channels:')
@@ -78,14 +79,25 @@ async def on_ready():
     constantsMessage = await(client.get_channel(logsID).fetch_message(constantsID))
     constants = ast.literal_eval(constantsMessage.content)
 
-    voiceMessage = await(client.get_channel(logsID).fetch_message(voiceID))
-    vcTimes = ast.literal_eval(voiceMessage.content)
-    textMessage = await(client.get_channel(logsID).fetch_message(textID))
-    textTimes = ast.literal_eval(textMessage.content)
-    niceTextMessage = await(client.get_channel(logsID).fetch_message(niceTextID))
-    niceVoiceMessage = await(client.get_channel(logsID).fetch_message(niceVoiceID))
+    textlog_messageID = constants['textlogID']
+    niceTextMessage = constants['nicetextlogID']
+    voiceID = constants['vclogID']
+    logsBackup_chanel = constants['logsbackupID']
 
-    logChannel = client.get_channel(logsID)
+    try:
+        voiceMessage = await(client.get_channel(logsID).fetch_message(voiceID))
+        vcTimes = ast.literal_eval(voiceMessage.content)
+        textMessage = await(client.get_channel(logsID).fetch_message(textlog_messageID))
+        textTimes = ast.literal_eval(textMessage.content)
+        niceTextMessage = await(client.get_channel(logsID).fetch_message(niceTextMessage))
+        niceVoiceMessage = await(client.get_channel(logsID).fetch_message(niceVoiceID))
+
+        logChannel = client.get_channel(logsID)
+        print(logChannel)
+    except discord.HTTPException as e:
+        print(e.text)
+        print('error in setting voice/text things, ending')
+        return
 
     print('Checking voice connections:')
     print(f'-----------------------------------------------------')
@@ -102,7 +114,8 @@ async def on_ready():
                     userTimes[getFull(guild.get_member(cons))] = round(time.time(), 2)
                     vcTimes[getFull(guild.get_member(cons))] = 0
         print(f'-----------------------------------------------------')
-    await(initStats())
+
+
 
 
 
@@ -115,13 +128,16 @@ async def setup_hook():
 async def updateMessage():
     global textMessage, voiceMessage, vcTimes
     if client.is_ready():
-        textMessage = await(client.get_channel(logsID).fetch_message(textID))
-        if ast.literal_eval(textMessage.content) != textTimes:
-            #print('Updating Text')
-            await(textMessage.edit(content=textTimes))
-            await(makeSorted())
-        # else:
-        #     print(f'nochanges')
+        textMessage = await(client.get_channel(logsID).fetch_message(constants['textlogID']))
+        try:
+            if ast.literal_eval(textMessage.content) != textTimes:
+                #print('Updating Text')
+                await(textMessage.edit(content=textTimes))
+                await(makeSorted())
+            # else:
+            #     print(f'nochanges')
+        except discord.HTTPException as e:
+            print(e.text)
 
         voiceMessage = await(client.get_channel(logsID).fetch_message(voiceID))
         for guild in client.guilds:
@@ -137,6 +153,8 @@ async def updateMessage():
             await(sortVoice())
         # else:
         #     print('No changes to update')
+
+
 
 
 async def initStats():
@@ -162,11 +180,6 @@ async def initStats():
         #print(profiles)
 
         await(profileMessage.edit(content=profiles))
-
-
-
-
-
 
 
 def fixList():
@@ -295,16 +308,37 @@ async def on_message(message):
             await(message.reply(content=constantMessage.content))
         elif message.content.__contains__('%usamin add constant'):
             words = re.findall("[\S]+", message.content)
-            constants[words[3]] = words[4]#what the hell does this line do
 
-            await(message.reply(content=f'Constant {words[3]}:{words[4]} added!'))
-            await(message.channel.send(content=constants))
-            await(updateConstants())
+            if len(words) != 5 or words[4] not in re.findall("[\d]+", message.content):
+                return
+            newConstant = int(words[4])
+            constants[words[3]] = newConstant#what the hell does this line do (it was very obvious)
+
+            try:
+                await(message.reply(content=f'Constant {words[3]}: {constants[words[3]]} added!'))
+                await(updateConstants())
+                await(message.channel.send(content=constants))
+            except discord.HTTPException as e:
+                print(e.text)
+
+        elif message.content.__contains__('%usamin add string'):
+            print("entered method")
+            words = re.findall("[\S]", message.content)
+            if len(words) != 5:
+                return
+            print('[assed tes')
+            constants[words[3]] = words[4]
+            try:
+                await(message.reply(content=f"Constant {words[3]}: {constants[words[3]]} added!"))
+                await(updateConstants())
+                await(message.channel.send(content=constants))
+            except discord.HTTPException as e:
+                print(e.text)
         elif message.content.__contains__('%usamin remove constant'):
             words = re.findall("[\S]+", message.content)
             await(message.reply(content=f'Removed {words[3]}:{constants.pop(words[3])} from constants'))
-            await(message.channel.send(content=constants))
             await(updateConstants())
+            await(message.channel.send(content=constants))
         elif message.content == '%ucn':
             await(updateConstantPlace())
         elif message.content == '%debug':
@@ -321,6 +355,27 @@ async def on_message(message):
                 await(message.delete())
             except discord.HTTPException as e:
                 await(message.reply(content=e.text))
+        elif message.content.__contains__('%usamin confirm'):
+            words = re.findall("[\S]+", message.content)
+
+            for i in range(len(words)):#turns IDs into ints
+                if i > 1:
+                    words[i] = int(words[i])
+
+            try:
+                if len(words) == 3:
+                    confirmMessage = await(message.channel.fetch_message(words[2]))
+                elif len(words == 4):
+                    confirmMessage = await(client.get_channel(words[2]).fetch_message(words[3]))
+                    if confirmMessage is None:
+                        raise discord.HTTPException("Couldnt get message ig")
+                await(message.reply(content=f"The Message?\n{confirmMessage.content}"))
+            except discord.HTTPException as e:
+                print(e.text)
+        elif message.content == '%usamin hotfix':
+            pass
+        elif message.content == '%usamin backup':
+            await(backupLogs())
 
     if message.content == '%usamin report text':
         textReport = await(client.get_channel(1061735975899893850).fetch_message(1066245140894732288))
@@ -349,6 +404,52 @@ async def on_message(message):
                         tempDict.update(wildWestID=((tempDict[wildWestID])[0]+1, (tempDict[wildWestID])[1]))
                     elif message.guild.id == jokercarID:
                         tempDict.update(jokercarID=((tempDict[jokercarID])[0]+1, (tempDict[jokercarID])[1]))
+
+
+async def backupLogs():
+    global logChannel, niceTextID, niceVoiceID
+    recordTime = datetime.datetime.now()
+    sentText = False
+    sentVoice = False
+    try:
+        textLog = await(client.get_channel(logsID).fetch_message(niceTextID))
+        backupChannel = await(client.get_channel(logChannel).send(textLog))
+    except discord.HTTPException as e:
+        print(e.text)
+        return
+
+    sortedTextString = f'```TEXT LOG - {recordTime.strftime("%d-%b %H:%M")}\n'
+    sortedText = dict(collections.OrderedDict(sorted(textTimes.items(), key=lambda kv: kv[1], reverse=True)))
+
+    for x in sortedText:
+        sortedTextString += f'{x}, {sortedText[x]}\n'
+    sortedTextString += '```'
+
+    try:
+        await(backupChannel.send(content=sortedTextString))
+        sentVoice = True
+    except discord.HTTPException as e:
+        print(e.text)
+
+    sortedVoice = dict(collections.OrderedDict(sorted(vcTimes.items(), key=lambda kv: kv[1], reverse=True)))
+    sortedVoiceString = f'```VOICE LOG - {recordTime.strftime("%d-%b %H:%M")}\n'
+    for x in sortedVoice:
+        sortedVoiceString += f'{x}, {datetime.timedelta(seconds=sortedVoice[x])}\n'
+    sortedVoiceString += '```'
+
+    try:
+        backupChannel.send(content=sortedVoiceString)
+        sentVoice = True
+    except discord.HTTPException as e:
+        print(e.text)
+
+    try:
+        if not sentText:
+            raise AssertionError('Text Log backup failed')
+        if not sentVoice:
+            raise AssertionError('Voice Log backup failed')
+    except AssertionError as e:
+        print(e)
 
 
 
@@ -455,7 +556,7 @@ async def embedIfunny(message):
                 f.write(chunk)
 
     try:
-        await(message.reply(file=mediaPath))
+        await(message.reply(file=discord.File(fp=mediaPath)))
         for file in os.listdir('Media'):
             os.remove(f'Media\\{file}')
     except discord.HTTPException as funny:
@@ -467,7 +568,6 @@ async def embedIfunny(message):
         print(urls)
 
         await(message.reply(content=f'Can\'t embed, {funny.text} (yikes!)'))
-
 
 
 async def makeSorted():
@@ -495,6 +595,8 @@ async def mimic(channel, message):
 
 
 async def updateConstants():
+    global constants
+    constants = dict(collections.OrderedDict(sorted(constants.items(), key=lambda kv: kv[0])))
     message = await(logChannel.fetch_message(constantsID))
     await(message.edit(content=constants))
 
@@ -604,6 +706,3 @@ logger.addHandler(handler)
 handler = logging.FileHandler(filename='times.txt', encoding='utf-8', mode='w')
 client.run(token=token, log_handler=handler, log_level=logging.DEBUG)
 #client.run(token=token)
-
-
-
