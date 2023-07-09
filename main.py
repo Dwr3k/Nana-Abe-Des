@@ -1,3 +1,5 @@
+import sys
+
 import discord
 import datetime
 import time
@@ -11,10 +13,7 @@ import requests
 import os
 import json
 import re
-# from selenium import webdriver
-# from selenium.webdriver.edge.options import Options
-# from selenium.webdriver.common.by import By
-# from selenium.webdriver.support.wait import WebDriverWait
+from yt_dlp import YoutubeDL
 
 id = 636289011215761461
 secret = 'QVO-pFuorq4lfhzumtALs505MGrajikQ'
@@ -25,7 +24,7 @@ perm_num = 8
 ouath2_url = 'https://discord.com/api/oauth2/authorize?client_id=636289011215761461&permissions=8&scope=bot'
 
 ignoreNames = ['Nana Abe des', 'SaucyBot', 'Mudae']
-ignoreChannels = ['logs', 'modlog', 'shh', 'bot-time', 'mmmm-i-love-manga']
+ignoreChannels = ['logs', 'modlog', 'shh', 'bot-time', 'mmmm-i-love-manga', 'logs-backup']
 jokercarThumb = 'https://cdn.discordapp.com/icons/636290342156500993/14b3a9b21d1be1e0a92a8cf7f4d58063.webp'
 
 jokercarID = 636290342156500993
@@ -49,23 +48,22 @@ constantsID = 1061736393086345296  #id of constants message in #logs
 constants = {}
 
 
-logsID = 1061735975899893850
+logs_channelID = 1061735975899893850
+logsbackup_channelID = -1
 textlog_messageID = -1
-voiceID = -1
-niceTextID = -1
-niceVoiceID = 1066245140894732288
+nicetextlog_messageID = -1
+voicelog_messageID = -1
+nicevoicelog_messageID = -1
 
 profiles = {}
 # options = Options()
 # options.add_argument('--headless')
 # driver = webdriver.Edge(options=options)
 
-global textMessage, voiceMessage, niceTextMessage, niceVoiceMessage, logChannel
-
-
 @client.event
 async def on_ready():
-    global vcTimes, textTimes, constants, textMessage, voiceMessage, userTimes, niceTextMessage, niceVoiceMessage, logChannel, textlog_messageID, niceTextID, voiceID
+    global vcTimes, textTimes, constants, textlog_message, voicelog_message, userTimes, nicevoice_message, textlog_messageID, logs_channelID
+    global logs_channelID, logsbackup_channelID, textlog_messageID, nicetextlog_messageID, voicelog_messageID, nicevoicelog_messageID
     runTime = time.time()
     print('Connected to Discord')
     print(f'found channels:')
@@ -76,28 +74,31 @@ async def on_ready():
             print(f'{channel.name}: {channel.id}')
         print(f'-----------------------------------------------------')
 
-    constantsMessage = await(client.get_channel(logsID).fetch_message(constantsID))
+    constantsMessage = await(client.get_channel(logs_channelID).fetch_message(constantsID))
     constants = ast.literal_eval(constantsMessage.content)
 
-    textlog_messageID = constants['textlogID']
-    niceTextMessage = constants['nicetextlogID']
-    voiceID = constants['vclogID']
-    logsBackup_chanel = constants['logsbackupID']
+    try:
+        textlog_messageID = constants['textlog_message_id']
+        nicetextlog_messageID = constants['nicetextlog_message_id']
+        voicelog_messageID = constants['voicelog_message_id']
+        nicevoicelog_messageID = constants['voicelog_message_id']
+        logsbackup_channelID = constants['logsbackup_channel_id']
+        logs_channelID = constants['logs_channel_id']
+    except KeyError as e:
+        print(e)
+        sys.exit()
 
     try:
-        voiceMessage = await(client.get_channel(logsID).fetch_message(voiceID))
-        vcTimes = ast.literal_eval(voiceMessage.content)
-        textMessage = await(client.get_channel(logsID).fetch_message(textlog_messageID))
-        textTimes = ast.literal_eval(textMessage.content)
-        niceTextMessage = await(client.get_channel(logsID).fetch_message(niceTextMessage))
-        niceVoiceMessage = await(client.get_channel(logsID).fetch_message(niceVoiceID))
-
-        logChannel = client.get_channel(logsID)
-        print(logChannel)
+        voicelog_message = await(client.get_channel(logs_channelID).fetch_message(voicelog_messageID))
+        vcTimes = ast.literal_eval(voicelog_message.content)
+        textlog_message = await(client.get_channel(logs_channelID).fetch_message(textlog_messageID))
+        textTimes = ast.literal_eval(textlog_message.content)
+        nicetextlog_messageID = await(client.get_channel(logs_channelID).fetch_message(nicetextlog_messageID))
+        nicevoice_message = await(client.get_channel(logs_channelID).fetch_message(nicevoicelog_messageID))
     except discord.HTTPException as e:
         print(e.text)
         print('error in setting voice/text things, ending')
-        return
+        sys.exit()
 
     print('Checking voice connections:')
     print(f'-----------------------------------------------------')
@@ -116,30 +117,28 @@ async def on_ready():
         print(f'-----------------------------------------------------')
 
 
-
-
-
 @client.event
 async def setup_hook():
     updateMessage.start()
 
 
-@tasks.loop(minutes=1)
+# @tasks.loop(seconds=15)
 async def updateMessage():
-    global textMessage, voiceMessage, vcTimes
+    return
+    global textlog_message, voicelog_message, vcTimes
     if client.is_ready():
-        textMessage = await(client.get_channel(logsID).fetch_message(constants['textlogID']))
+        textlog_message = await(client.get_channel(logs_channelID).fetch_message(textlog_messageID))
         try:
-            if ast.literal_eval(textMessage.content) != textTimes:
+            if ast.literal_eval(textlog_message.content) != textTimes:
                 #print('Updating Text')
-                await(textMessage.edit(content=textTimes))
+                await(textlog_message.edit(content=textTimes))
                 await(makeSorted())
             # else:
             #     print(f'nochanges')
         except discord.HTTPException as e:
             print(e.text)
 
-        voiceMessage = await(client.get_channel(logsID).fetch_message(voiceID))
+        voicelog_message = await(client.get_channel(logs_channelID).fetch_message(voicelog_messageID))
         for guild in client.guilds:
             for channel in guild.voice_channels:
                 for cons in channel.voice_states:
@@ -147,13 +146,12 @@ async def updateMessage():
                     vcTimes[getFull(guild.get_member(cons))] = round(vcTimes[getFull(guild.get_member(cons))] + time.time() - userTimes[getFull(guild.get_member(cons))], 2)
                     userTimes[getFull(guild.get_member(cons))] = round(time.time(), 2)
 
-        if ast.literal_eval(voiceMessage.content) != vcTimes:
+        if ast.literal_eval(voicelog_message.content) != vcTimes:
             #print('updating Voice')
-            await(voiceMessage.edit(content=vcTimes))
+            await(voicelog_message.edit(content=vcTimes))
             await(sortVoice())
         # else:
         #     print('No changes to update')
-
 
 
 
@@ -180,6 +178,7 @@ async def initStats():
         #print(profiles)
 
         await(profileMessage.edit(content=profiles))
+
 
 
 def fixList():
@@ -258,7 +257,8 @@ def getTime():
 
 @client.event
 async def on_message(message):
-    global vcTimes, textTimes, voiceMessage, textMessage, niceTextMessage, userTimes, driver, options, constants, logChannel, profiles
+    global vcTimes, textTimes, voicelog_message, textlog_message, nicetextlog_messageID, userTimes, driver, options, constants, profiles
+    global logBackupChannel
 
     current = datetime.datetime.now()
     currentTime = current.strftime("%H:%M")
@@ -269,19 +269,7 @@ async def on_message(message):
         await(embedIfunny(message))
 
     if message.author.name in ['dwr3k', 'Nana Abe des', 'dooki6']:
-        if message.content == '%usamin textclear':
-            textTimes = {}
-            await(message.channel.last_message.delete())
-            await(message.channel.send(content='Change da world, goodbye forever~'))
-            await(message.channel.last_message.delete(delay=3))
-            await(textMessage.edit(content=textTimes))
-        elif message.content == '%usamin voiceclear':
-            vcTimes = {}
-            await(message.channel.last_message.delete())
-            await(message.channel.send(content='Change da world, goodbye forever~'))
-            await(message.channel.last_message.delete(delay=3))
-            await(voiceMessage.edit(content=vcTimes))
-        elif message.content.__contains__('%usamin mimic'):
+        if message.content.__contains__('%usamin mimic'):
             await(mimic(message.channel, message.content[13:]))
             await(message.delete())
         elif message.content == '%usamin record':
@@ -297,14 +285,10 @@ async def on_message(message):
                             vcTimes[getFull(guild.get_member(cons))] = round(time.time() - userTimes[getFull(guild.get_member(cons))], 2)
                             print(f'{getFull(guild.get_member(cons))} added to list with time {vcTimes[getFull(guild.get_member(cons))]}')
                         userTimes[getFull(guild.get_member(cons))] = round(time.time(), 2)
-            await(voiceMessage.edit(content=vcTimes))
+            await(voicelog_message.edit(content=vcTimes))
             await(message.delete())
-        elif message.content == '%usamin ora':#will probably never use this again
-            resetMessage = await(client.get_channel(709263987379798097).fetch_message(1065855899886944256))
-            vcTimes = ast.literal_eval(resetMessage.content)
-            await(voiceMessage.edit(content=vcTimes))
         elif message.content.__contains__('%usamin list constant'):
-            constantMessage = await(logChannel.fetch_message(constantsID))
+            constantMessage = await(client.get_channel(logs_channelID).fetch_message(constantsID))
             await(message.reply(content=constantMessage.content))
         elif message.content.__contains__('%usamin add constant'):
             words = re.findall("[\S]+", message.content)
@@ -322,11 +306,11 @@ async def on_message(message):
                 print(e.text)
 
         elif message.content.__contains__('%usamin add string'):
-            print("entered method")
-            words = re.findall("[\S]", message.content)
+            words = re.findall("[\S]+", message.content)
+            print(len(words))
             if len(words) != 5:
                 return
-            print('[assed tes')
+
             constants[words[3]] = words[4]
             try:
                 await(message.reply(content=f"Constant {words[3]}: {constants[words[3]]} added!"))
@@ -334,9 +318,14 @@ async def on_message(message):
                 await(message.channel.send(content=constants))
             except discord.HTTPException as e:
                 print(e.text)
-        elif message.content.__contains__('%usamin remove constant'):
+        elif message.content.__contains__('%usamin remove'):
             words = re.findall("[\S]+", message.content)
-            await(message.reply(content=f'Removed {words[3]}:{constants.pop(words[3])} from constants'))
+
+            if words[2] not in constants.keys():
+                await(message.reply(content=f'Key {words[2]} doesnt exist!'))
+                return
+
+            await(message.reply(content=f'Removed {words[2]}: {constants.pop(words[2])} from constants'))
             await(updateConstants())
             await(message.channel.send(content=constants))
         elif message.content == '%ucn':
@@ -373,19 +362,16 @@ async def on_message(message):
             except discord.HTTPException as e:
                 print(e.text)
         elif message.content == '%usamin hotfix':
-            pass
+            await(hotfix())
         elif message.content == '%usamin backup':
             await(backupLogs())
 
     if message.content == '%usamin report text':
-        textReport = await(client.get_channel(1061735975899893850).fetch_message(1066245140894732288))
-        await(message.channel.send(content=textReport.content))
-        await(message.delete())
+        textReport = await(client.get_channel(logs_channelID).fetch_message(nicetextlog_messageID))
+        await(message.channel.reply(content=textReport.content))
     elif message.content == '%usamin report voice':
-        voiceReport = await(client.get_channel(1061735975899893850).fetch_message(1065534601558249573))
-        await(message.channel.send(content=voiceReport.content))
-        await(message.delete())
-
+        voiceReport = await(client.get_channel(logs_channelID).fetch_message(nicevoicelog_messageID))
+        await(message.channel.reply(content=voiceReport.content))
 
     if message.channel.name not in ignoreChannels and (message.author.name not in ignoreNames):
         if getFull(message.author) not in textTimes:
@@ -405,17 +391,34 @@ async def on_message(message):
                     elif message.guild.id == jokercarID:
                         tempDict.update(jokercarID=((tempDict[jokercarID])[0]+1, (tempDict[jokercarID])[1]))
 
+async def hotfix():
+    return
+    recordTime = datetime.datetime.now()
+    message = await(client.get_channel(logs_channelID).fetch_message(1061766911966314536))
+    tempDict = ast.literal_eval(message.content)
 
+    sortedTextString = f'```VOICE LOG - 09-Jul 01:40:10\n'
+    sortedText = dict(collections.OrderedDict(sorted(tempDict.items(), key=lambda kv: kv[1], reverse=True)))
+
+    for x in sortedText:
+        sortedTextString += f'{x}, {sortedText[x]}\n'
+    sortedTextString += '```'
+
+    try:
+        await(client.get_channel(logsbackup_channelID).send(content=sortedTextString))
+    except discord.HTTPException as e:
+        print(e.text)
+
+# @tasks.loop(seconds=15)
 async def backupLogs():
-    global logChannel, niceTextID, niceVoiceID
+    return
     recordTime = datetime.datetime.now()
     sentText = False
     sentVoice = False
     try:
-        textLog = await(client.get_channel(logsID).fetch_message(niceTextID))
-        backupChannel = await(client.get_channel(logChannel).send(textLog))
+        textLog = await(client.get_channel(logs_channelID).fetch_message(nicetextlog_messageID))
     except discord.HTTPException as e:
-        print(e.text)
+        print(f'Text - {e.text}')
         return
 
     sortedTextString = f'```TEXT LOG - {recordTime.strftime("%d-%b %H:%M")}\n'
@@ -426,10 +429,11 @@ async def backupLogs():
     sortedTextString += '```'
 
     try:
-        await(backupChannel.send(content=sortedTextString))
-        sentVoice = True
+        await(client.get_channel(logsbackup_channelID).send(content=textTimes))
+        await(client.get_channel(logsbackup_channelID).send(content=sortedTextString))
+        sentText = True
     except discord.HTTPException as e:
-        print(e.text)
+        print(f"Voice - {e.text}")
 
     sortedVoice = dict(collections.OrderedDict(sorted(vcTimes.items(), key=lambda kv: kv[1], reverse=True)))
     sortedVoiceString = f'```VOICE LOG - {recordTime.strftime("%d-%b %H:%M")}\n'
@@ -438,7 +442,8 @@ async def backupLogs():
     sortedVoiceString += '```'
 
     try:
-        backupChannel.send(content=sortedVoiceString)
+        await(client.get_channel(logsbackup_channelID.send(content=vcTimes)))
+        await(client.get_channel(logsbackup_channelID).send(content=sortedVoiceString))
         sentVoice = True
     except discord.HTTPException as e:
         print(e.text)
@@ -456,7 +461,7 @@ async def backupLogs():
 
 
 async def updateConstantPlace():
-    m = await(logChannel.fetch_message(1061736393086345296))
+    m = await(client.get_channel(logs_channelID).fetch_message(1061736393086345296))
     await(m.edit(content=constants))
 
 async def embedInstagram(message):
@@ -569,25 +574,36 @@ async def embedIfunny(message):
 
         await(message.reply(content=f'Can\'t embed, {funny.text} (yikes!)'))
 
+async def embedTiktok(message):
+    words = re.findall("[\S]+")
+    url = ""
+
+    for word in words:
+        if word.__contains__("https://www.tiktok.com"):
+            url = word
+            pass
+
+    with YoutubeDL() as ydl:
+        ydl.download(url)
 
 async def makeSorted():
     currentTime = datetime.datetime.now()
     sortedText = dict(collections.OrderedDict(sorted(textTimes.items(), key=lambda kv: kv[1], reverse=True)))
-    sortedTextString = f'```LAST UPDATED AT {currentTime.strftime("%H:%M:%S")}\n'
+    sortedTextString = f'```LAST UPDATED {currentTime.strftime("%H:%M:%S")}\n'
     for x in sortedText:
         sortedTextString += f'{x}, {sortedText[x]}\n'
     sortedTextString += '```'
-    await(niceTextMessage.edit(content=sortedTextString))
+    await(nicetextlog_messageID.edit(content=sortedTextString))
 
 
 async def sortVoice():
     currentTime = datetime.datetime.now()
     sortedVoice = dict(collections.OrderedDict(sorted(vcTimes.items(), key=lambda kv: kv[1], reverse=True)))
-    sortedVoiceString = f'```LAST UPDATED AT {currentTime.strftime("%H:%M:%S")}\n'
+    sortedVoiceString = f'```LAST UPDATED {currentTime.strftime("%H:%M:%S")}\n'
     for x in sortedVoice:
         sortedVoiceString += f'{x}, {datetime.timedelta(seconds=sortedVoice[x])}\n'
     sortedVoiceString += '```'
-    await(niceVoiceMessage.edit(content=sortedVoiceString))
+    await(nicevoice_message.edit(content=sortedVoiceString))
 
 
 async def mimic(channel, message):
@@ -597,7 +613,7 @@ async def mimic(channel, message):
 async def updateConstants():
     global constants
     constants = dict(collections.OrderedDict(sorted(constants.items(), key=lambda kv: kv[0])))
-    message = await(logChannel.fetch_message(constantsID))
+    message = await(client.get_channel(logs_channelID).fetch_message(constantsID))
     await(message.edit(content=constants))
 
 
