@@ -119,7 +119,8 @@ async def on_ready():
 
 @client.event
 async def setup_hook():
-    updateMessage.start()
+    return
+    #updateMessage.start()
 
 
 # @tasks.loop(seconds=15)
