@@ -405,8 +405,7 @@ async def on_message(message):
 
 async def hotfix():
 
-
-    test = discord.Embed(d)
+    await(backupLogs())
 
 
     return
@@ -426,27 +425,49 @@ async def hotfix():
     except discord.HTTPException as e:
         print(e.text)
 
+oldText = {'Desti d(๑´ڡ`๑ )b#7588': (4603, '06:01'), 'Dwr3k#0424': (3287, '21:19'), 'Vsel#5099': (3030, '11:54'), 'alan#5202': (2570, '20:14'), 'morstain#6565': (2414, '18:53'), 'Kuro#8574': (1995, '21:09'), 'Fuyubro#4649': (1888, '20:35'), 'hoshi#1892': (1597, '19:58'), 'Framework#8725': (1448, '18:38'), 'レン#2947': (1359, '23:33'), 'レンジ#2947': (1296, '07:10'), 'Moyashi#1187': (1082, '17:53'), 'キョウヤ#2947': (963, '12:19'), 'Olive#4040': (929, '18:40'), 'J12od99#7443': (840, '14:53'), 'W0ps#5810': (735, '03:54'), 'Sweeber#7517': (728, '03:37'), 'Zeroes|Producer-San#8327': (473, '23:34'), 'purin#0011': (465, '12:16'), 'carrot#9332': (320, '20:04'), 'Vsel#4242': (289, '09:06'), 'LolicoreP#0911': (278, '14:03'), 'Autan#3622': (254, '13:12'), 'ramon#7873': (218, '15:11'), 'K1#9503': (206, '01:51'), 'Ushino#1986': (205, '08:38'), 'Amnitoki#1001': (179, '04:08'), 'genm#0790': (161, '13:14'), 'rain#9416': (148, '21:17'), 'nareso#4378': (91, '13:16'), 'kaneda#3677': (71, '18:14'), 'DaMaryP#7517': (69, '18:52'), 'ジャンヌ#2681': (57, '08:04'), 'Yureizan#5692': (43, '05:43'), 'nala9#0': (33, '22:55'), 'sui#8624': (30, '07:48'), 'NotSoBot#9555': (25, '10:40'), 'Gold#5402': (24, '21:17'), 'dwr3k#0': (23, '20:23'), 'morstain#0': (16, '13:38'), 'yori#9776': (13, '17:32'), 'Wesley#5714': (13, '12:26'), 'vsel#0': (12, '21:24'), 'Hibm#6969': (12, '03:46'), 'moyashi45#0': (11, '21:46'), 'm.matsushima#3888': (9, '21:28'), 'destinationmystery#0': (7, '05:03'), 'mayuzumifuyuko#0': (6, '03:23'), '.framework#0': (4, '21:49'), 'kuro765#0': (4, '21:42'), 'mistrcarrot#0': (3, '20:23'), 'koharukoga#0': (2, '20:58'), 'xalan9#0': (2, '16:56'), 'ViciousHarbinger#9618': (2, '00:01'), 'Dooki6#7320': (1, '21:28'), 'yukimisajo#0': (1, '19:54'), '._._._._._._._._._._._._._._._._#0': (1, '17:25'), 'Wanko#6192': (1, '17:11'), 'PiggyTerry#6018': (1, '08:51'), 'huehuehuehuehuehuehuehuehuehue#0': (1, '07:37'), 'z.buki#9910': (1, '07:24'), 'thefuckingvvvvvvv#3226': (1, '06:49'), 'ushino#0': (1, '03:09')}
+oldVoice = {'Kuro#8574': 2346555.16, 'Moyashi#1187': 2294539.94, 'Dwr3k#0424': 2195576.78, 'carrot#9332': 1469258.47, 'Desti d(๑´ڡ`๑ )b#7588': 1288278.37, 'J12od99#7443': 1190770.37, 'alan#5202': 823627.82, 'W0ps#5810': 666446.75, 'Framework#8725': 574610.12, 'Vsel#5099': 464618.95, 'Fuyubro#4649': 411770.95, 'レンジ#2947': 297567.93, 'レン#2947': 249108.72, 'キョウヤ#2947': 190655.13, 'yori#9776': 105339.7, 'Amnitoki#1001': 103989.55, 'K1#9503': 94748.64, 'moyashi45#0': 62815.07, 'Ushino#1986': 59667.69, 'weeaboo.trash#0': 54884.96, 'morstain#6565': 52398.54, 'dwr3k#0': 48336.44, 'mistrcarrot#0': 40975.54, 'Vsel#4242': 30603.7, 'hoshi#1892': 19780.53, 'purin#0011': 15878.49, 'j12od99#0': 15179.39, 'ViciousHarbinger#9618': 13552.72, 'Sweeber#7517': 13267.44, 'Wesley#5714': 13025.41, 'nala9#0': 11193.93, 'sierra_sweatshirt#0': 8682.24, 'destinationmystery#0': 8025.77, 'Dooki6#7320': 7732.56, 'm.matsushima#3888': 6533.81, 'Hibm#6969': 5475.8, 'misonoo#0': 5374.48, 'Zeroes|Producer-San#8327': 4355.06, 'LolicoreP#0911': 3544.88, '.framework#0': 3357.13, 'Mysterious Alter Ego Λ#4223': 3312.65, 'genm#0790': 2794.21, 'Autan#3622': 2760.54, 'Yureizan#5692': 1002.42, 'ushino#0': 449.98, 'dooki.3#0': 91.95}
 # @tasks.loop(seconds=15)
 async def backupLogs():
+
     recordTime = datetime.datetime.now()
-    textEmbed = discord.Embed(title=f'```TEXT LOG - {recordTime.strftime("%d-%b %H:%M")}', description=textTimes)
+    textEmbed = discord.Embed(title=f'```TEXT LOG - {recordTime.strftime("%d-%b %H:%M")}```', description=f"```{textTimes}```")
     backupChannel = client.get_channel(logsbackup_channelID)
+
+    oldTextEmbed = discord.Embed(title=f'```TEXT LOG - 04-Jul 20:23```', description=f"```{oldText}```")
+
     try:
-        await(backupChannel.send(embed=textEmbed))
+        await(backupChannel.send(embed=oldTextEmbed))
     except discord.HTTPException as e:
         print(e.text)
 
     sortedTextString = '```'
-    sortedText = dict(collections.OrderedDict(sorted(textTimes.items(), key=lambda kv: kv[1], reverse=True)))
+    sortedText = dict(collections.OrderedDict(sorted(oldText.items(), key=lambda kv: kv[1], reverse=True)))
     for x in sortedText:
         sortedTextString += f'{x}, {sortedText[x]}\n'
     sortedTextString += '```'
-    sortedTextEmbed = discord.Embed(title=f'```TEXT LOG - {recordTime.strftime("%d-%b %H:%M")}', description=sortedTextString)
+    sortedTextEmbed = discord.Embed(title=f'```SORTED TEXT LOG - 04-Jul 20:23```', description=sortedTextString)
 
     try:
-        await(backupChannel.send(content=sortedText))
+        await(backupChannel.send(embed=sortedTextEmbed))
     except discord.HTTPException as e:
         print(e.text)
+
+    sortedOldVoice = dict(collections.OrderedDict(sorted(oldVoice.items(), key=lambda kv: kv[1], reverse=True)))
+    deltaedVoice = {k: str(datetime.timedelta(seconds=v))[:len(str(datetime.timedelta(seconds=v)))-4] for k, v in sortedOldVoice.items()}
+    niceString = ""
+    for x,v in deltaedVoice.items():
+        niceString += f"{x}, {v}\n"
+    oldVoiceEmbed = discord.Embed(title=f'```VOICE LOG - 09-Jul 01:40```', description=f"```{oldVoice}```")
+    sortedOldVoiceEmbed = discord.Embed(title=f'```SORTED VOICE LOG - 09-Jul 01:40```', description=f"```{niceString}```")
+
+    try:
+        await(backupChannel.send(embed=oldVoiceEmbed))
+        await(backupChannel.send(embed=sortedOldVoiceEmbed))
+    except discord.HTTPException as e:
+        print(e.text)
+
+
 
 
     return
