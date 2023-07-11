@@ -92,10 +92,13 @@ async def on_ready():
 
     try:
         voicelog_message = await(client.get_channel(logs_channelID).fetch_message(voicelog_messageID))
-        #vcTimes = ast.literal_eval(voicelog_message.content)
-        vcTimes = {}
+        voicelogsString = voicelog_message.embeds[0].description
+        vcTimes = ast.literal_eval(voicelogsString[3:len(voicelogsString)-3])
+
         textlog_message = await(client.get_channel(logs_channelID).fetch_message(textlog_messageID))
-        textTimes = ast.literal_eval(textlog_message.content)
+        textlogString = textlog_message.embeds[0].description
+        textTimes = ast.literal_eval(textlogString[3:len(textlogString)-3])
+
         nicetextlog_messageID = await(client.get_channel(logs_channelID).fetch_message(nicetextlog_messageID))
         nicevoice_message = await(client.get_channel(logs_channelID).fetch_message(nicevoicelog_messageID))
     except discord.HTTPException as e:
@@ -123,6 +126,7 @@ async def on_ready():
 @client.event
 async def setup_hook():
     return
+    #backupLogs.start()
     #updateMessage.start()
 
 
@@ -184,39 +188,9 @@ async def initStats():
         await(profileMessage.edit(content=profiles))
 
 
-
-def fixList():
-    testList = textTimes
-    testVoice = vcTimes
-    rafes = []
-    r = []
-    for x in testList.keys():
-        if '#2947' in x:
-            rafes.append(testList[x])
-    print('text')
-    print(rafes)
-
-    tt = 0
-    tv = 0
-
-    for x in rafes:
-        tt = tt + x[0]
-    print(f'text {tt}')
-
-    for x in testVoice.keys():
-        if '#2947' in x:
-            r.append(testVoice[x])
-    print('voice')
-    print(r)
-    tv = sum(r)
-    print(tv)
-
-
-
-
 @client.event
 async def on_voice_state_update(member, before, after):
-    global profiles
+    global profiles, userTimes
     if before.channel is None and after.channel is not None:
         if getFull(member) not in vcTimes:
             vcTimes[getFull(member)] = 0
@@ -241,9 +215,6 @@ async def on_voice_state_update(member, before, after):
                 elif member.guild.id == jokercarID:
                     tempDict.update(jokercarID = ((tempDict[jokercarID])[0], (tempDict[jokercarID])[1]+ round(time.time() - userTimes[getFull(member)], 2)))
                 await(profileMessage.edit(content=profiles))
-
-
-
 
         else:
             vcTimes[getFull(member)] = round(time.time()-userTimes[getFull(member)], 2)
@@ -442,11 +413,6 @@ async def hotfix():
 
     await(textMess.edit(content="", embed=textLog.embeds[0]))
 
-
-    return
-    await(backupLogs())
-
-
     return
     recordTime = datetime.datetime.now()
     message = await(client.get_channel(logs_channelID).fetch_message(1061766911966314536))
@@ -465,87 +431,86 @@ async def hotfix():
         print(e.text)
 
 
-
-# @tasks.loop(seconds=15)
+@tasks.loop(seconds=30)
 async def backupLogs():
-    recordTime = datetime.datetime.now()
-    textEmbed = discord.Embed(title=f'```TEXT LOG - {recordTime.strftime("%d-%b %H:%M")}```', description=f"```{textTimes}```")
-    backupChannel = client.get_channel(logsbackup_channelID)
-
-    try:
-        await(backupChannel.send(embed=textEmbed))
-    except discord.HTTPException as e:
-        print(e.text)
-
-    sortedTextString = '```'
-    sortedText = dict(collections.OrderedDict(sorted(textTimes.items(), key=lambda kv: kv[1], reverse=True)))
-    for x in sortedText:
-        sortedTextString += f'{x}, {sortedText[x]}\n'
-    sortedTextString += '```'
-    sortedTextEmbed = discord.Embed(title=f'```SORTED TEXT LOG - {recordTime.strftime("%d-%b %H:%M")}```', description=sortedTextString)
-
-    try:
-        await(backupChannel.send(embed=sortedTextEmbed))
-    except discord.HTTPException as e:
-        print(e.text)
-
-
-    deltaedVoice = {k: str(datetime.timedelta(seconds=v))[:len(str(datetime.timedelta(seconds=v)))-4] for k, v in vcTimes.items()}
-    niceString = ""
-    for x,v in deltaedVoice.items():
-        niceString += f"{x}, {v}\n"
-    oldVoiceEmbed = discord.Embed(title=f'```VOICE LOG - {recordTime.strftime("%d-%b %H:%M")}```', description=f"```{vcTimes}```")
-    sortedOldVoiceEmbed = discord.Embed(title=f'```SORTED VOICE LOG - {recordTime.strftime("%d-%b %H:%M")}```', description=f"```{niceString}```")
-
-    try:
-        await(backupChannel.send(embed=oldVoiceEmbed))
-        await(backupChannel.send(embed=sortedOldVoiceEmbed))
-    except discord.HTTPException as e:
-        print(e.text)
-
-
-
-
     return
+    if client.is_ready():
+        recordTime = datetime.datetime.now()
+        textEmbed = discord.Embed(title=f'```TEXT LOG - {recordTime.strftime("%d-%b %H:%M")}```', description=f"```{textTimes}```")
+        backupChannel = client.get_channel(logsbackup_channelID)
 
-    sentText = False
-    sentVoice = False
-    try:
-        textLog = await(client.get_channel(logs_channelID).fetch_message(nicetextlog_messageID))
-    except discord.HTTPException as e:
-        print(f'Text - {e.text}')
-        return
+        try:
+            await(backupChannel.send(embed=textEmbed))
+        except discord.HTTPException as e:
+            print(e.text)
+
+        sortedTextString = '```'
+        sortedText = dict(collections.OrderedDict(sorted(textTimes.items(), key=lambda kv: kv[1], reverse=True)))
+        for x in sortedText:
+            sortedTextString += f'{x}, {sortedText[x]}\n'
+        sortedTextString += '```'
+        sortedTextEmbed = discord.Embed(title=f'```SORTED TEXT LOG - {recordTime.strftime("%d-%b %H:%M")}```', description=sortedTextString)
+
+        try:
+            await(backupChannel.send(embed=sortedTextEmbed))
+        except discord.HTTPException as e:
+            print(e.text)
 
 
+        for guild in client.guilds:
+            for channel in guild.voice_channels:
+                for cons in channel.voice_states:
+                    vcTimes[getFull(guild.get_member(cons))] = round(
+                        vcTimes[getFull(guild.get_member(cons))] + time.time() - userTimes[
+                            getFull(guild.get_member(cons))], 2)
+                    userTimes[getFull(guild.get_member(cons))] = round(time.time(), 2)
 
-    try:
-        await(client.get_channel(logsbackup_channelID).send(content=textTimes))
-        await(client.get_channel(logsbackup_channelID).send(content=sortedTextString))
-        sentText = True
-    except discord.HTTPException as e:
-        print(f"Voice - {e.text}")
+        deltaedVoice = {k: str(datetime.timedelta(seconds=v))[:len(str(datetime.timedelta(seconds=v)))-4] for k, v in vcTimes.items()}
+        niceString = ""
+        for x,v in deltaedVoice.items():
+            niceString += f"{x}, {v}\n"
+        voiceEmbed = discord.Embed(title=f'```VOICE LOG - {recordTime.strftime("%d-%b %H:%M")}```', description=f"```{vcTimes}```")
+        sortedVoiceEmbed = discord.Embed(title=f'```SORTED VOICE LOG - {recordTime.strftime("%d-%b %H:%M")}```', description=f"```{niceString}```")
 
-    sortedVoice = dict(collections.OrderedDict(sorted(vcTimes.items(), key=lambda kv: kv[1], reverse=True)))
-    sortedVoiceString = f'```VOICE LOG - {recordTime.strftime("%d-%b %H:%M")}\n'
-    for x in sortedVoice:
-        sortedVoiceString += f'{x}, {datetime.timedelta(seconds=sortedVoice[x])}\n'
-    sortedVoiceString += '```'
+        try:
+            await(backupChannel.send(embed=voiceEmbed))
+            await(backupChannel.send(embed=sortedVoiceEmbed))
+        except discord.HTTPException as e:
+            print(e.text)
 
-    try:
-        await(client.get_channel(logsbackup_channelID.send(content=vcTimes)))
-        await(client.get_channel(logsbackup_channelID).send(content=sortedVoiceString))
-        sentVoice = True
-    except discord.HTTPException as e:
-        print(e.text)
+        try:
+            txtlog_message = await(client.get_channel(logs_channelID).fetch_message(textlog_messageID))
+            await(txtlog_message.edit(embed=textEmbed))
+        except discord.HTTPException as e:
+            print(f"txtlog_message:\n{e.text}")
+            sys.exit()
 
-    try:
-        if not sentText:
-            raise AssertionError('Text Log backup failed')
-        if not sentVoice:
-            raise AssertionError('Voice Log backup failed')
-    except AssertionError as e:
-        print(e)
+        try:
+            nicetxtlog_message = await(client.get_channel(logs_channelID).fetch_message(nicetextlog_messageID))
+            await(nicetxtlog_message.edit(embed=sortedTextEmbed))
+        except discord.HTTPException as e:
+            print(f"nicetxtlog_message:\n{e.text}")
+            sys.exit()
+        try:
+            vclog_message = await(client.get_channel(logs_channelID).fetch_message(voicelog_messageID))
+            await(vclog_message.edit(embed=voiceEmbed))
+        except discord.HTTPException as e:
+            print(f"vclog_message:\n{e.text}")
+            sys.exit()
 
+        try:
+            nicevclog_message = await(client.get_channel(logs_channelID).fetch_message(nicevoicelog_messageID))
+            await(nicevclog_message.edit(embed=sortedVoiceEmbed))
+        except discord.HTTPException as e:
+            print(f"nicevclog_message:\n{e.text}")
+            sys.exit()
+
+        if None in [txtlog_message, nicetxtlog_message, vclog_message, nicevclog_message]:
+            print('couldnt')
+            await(client.get_channel(logsbackup_channelID).send(message=f"@dwr3k#0 something has gone wrong"))
+            return
+        else:
+            print('yatta')
 
 
 
