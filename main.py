@@ -121,7 +121,6 @@ async def on_ready():
                     userTimes[getFull(guild.get_member(cons))] = round(time.time(), 2)
                     vcTimes[getFull(guild.get_member(cons))] = 0
         print(f'-----------------------------------------------------')
-        print(userTimes)
 
 
 @client.event
