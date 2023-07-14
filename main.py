@@ -121,12 +121,13 @@ async def on_ready():
                     userTimes[getFull(guild.get_member(cons))] = round(time.time(), 2)
                     vcTimes[getFull(guild.get_member(cons))] = 0
         print(f'-----------------------------------------------------')
+        print(userTimes)
 
 
 @client.event
 async def setup_hook():
-    return
-    #backupLogs.start()
+
+    backupLogs.start()
     #updateMessage.start()
 
 
@@ -225,11 +226,6 @@ def getFull(member):
     return f'{member.name}#{member.discriminator}'
 
 
-def getTime():
-    current = datetime.datetime.time()
-    return f'{current.hour}-{current.minute}'
-
-
 @client.event
 async def on_message(message):
     global vcTimes, textTimes, voicelog_message, textlog_message, nicetextlog_messageID, userTimes, driver, options, constants, profiles
@@ -243,7 +239,8 @@ async def on_message(message):
     elif message.content.__contains__('https://ifunny.co'):
         await(embedIfunny(message))
     elif message.content.__contains__('https://www.tiktok.com'):
-        await(embedTiktok(message))
+        pass
+        #await(embedTiktok(message))
 
     if message.author.name in ['dwr3k', 'Nana Abe des', 'dooki6']:
         if message.content.__contains__('%usamin mimic'):
@@ -322,28 +319,7 @@ async def on_message(message):
             except discord.HTTPException as e:
                 await(message.reply(content=e.text))
         elif message.content.__contains__('%usamin confirm'):
-            words = re.findall("[\S]+", message.content)
-
-            for i in range(len(words)):#turns IDs into ints
-                if i > 1:
-                    words[i] = int(words[i])
-
-            try:
-                if len(words) == 3:
-                    confirmMessage = await(message.channel.fetch_message(words[2]))
-                elif len(words == 4):
-                    confirmMessage = await(client.get_channel(words[2]).fetch_message(words[3]))
-                if confirmMessage is None:
-                    raise discord.HTTPException("Couldnt get message ig")
-                replyString = f"The Message?\n{confirmMessage.content}"
-                if len(replyString) > 2000:
-                    replyEmbed = discord.Embed(title=f"Message {confirmMessage.id}", description=replyString, colour=discord.Colour.darker_grey())
-                    await(message.reply(embed=replyEmbed))
-                else:
-                    await(message.reply(content=replyString))
-            except discord.HTTPException as e:
-                await(message.reply(content=f"{client.get_user(drem)} come fix your AWFUL bot bro"))
-                print(e.text)
+            await(confirm(message))
         elif message.content == '%usamin hotfix':
             await(hotfix())
         elif message.content == '%usamin backup':
@@ -373,6 +349,34 @@ async def on_message(message):
                         tempDict.update(wildWestID=((tempDict[wildWestID])[0]+1, (tempDict[wildWestID])[1]))
                     elif message.guild.id == jokercarID:
                         tempDict.update(jokercarID=((tempDict[jokercarID])[0]+1, (tempDict[jokercarID])[1]))
+
+
+async def confirm(message):
+    words = re.findall("[\S]+", message.content)
+
+    for i in range(len(words)):  # turns IDs into ints
+        if i > 1:
+            words[i] = int(words[i])
+
+    try:
+        if len(words) == 3:
+            confirmMessage = await(message.channel.fetch_message(words[2]))
+            embedTitle = f"Message {confirmMessage.id}"
+        elif len(words) == 4:
+            confirmMessage = await(client.get_channel(words[2]).fetch_message(words[3]))
+            embedTitle = f"Message {words[2]} {words[3]}"
+        if confirmMessage is None:
+            raise discord.HTTPException("Couldnt get message ig")
+
+        replyEmbed = discord.Embed(title=embedTitle, description=f"```{confirmMessage.content}```", colour=discord.Colour.darker_grey())
+        await(message.channel.send(embed=replyEmbed))
+
+        if len(message.embedsd) > 0:
+            print("saw embeds")
+            for embed in message.embeds:
+                await(message.channel.send(embed=embed))
+    except discord.HTTPException as e:
+        await(message.reply(f"{e.text}"))
 
 async def hotfix():
     recordTime = datetime.datetime.now()
@@ -431,9 +435,8 @@ async def hotfix():
         print(e.text)
 
 
-@tasks.loop(seconds=30)
+@tasks.loop(minutes=1)
 async def backupLogs():
-    return
     if client.is_ready():
         recordTime = datetime.datetime.now()
         textEmbed = discord.Embed(title=f'```TEXT LOG - {recordTime.strftime("%d-%b %H:%M")}```', description=f"```{textTimes}```")
@@ -477,11 +480,13 @@ async def backupLogs():
             await(backupChannel.send(embed=sortedVoiceEmbed))
         except discord.HTTPException as e:
             print(e.text)
+        return
 
         try:
             txtlog_message = await(client.get_channel(logs_channelID).fetch_message(textlog_messageID))
             await(txtlog_message.edit(embed=textEmbed))
         except discord.HTTPException as e:
+            print(textlog_messageID)
             print(f"txtlog_message:\n{e.text}")
             sys.exit()
 
@@ -489,12 +494,14 @@ async def backupLogs():
             nicetxtlog_message = await(client.get_channel(logs_channelID).fetch_message(nicetextlog_messageID))
             await(nicetxtlog_message.edit(embed=sortedTextEmbed))
         except discord.HTTPException as e:
+            print(nicetxtlog_message)
             print(f"nicetxtlog_message:\n{e.text}")
             sys.exit()
         try:
             vclog_message = await(client.get_channel(logs_channelID).fetch_message(voicelog_messageID))
             await(vclog_message.edit(embed=voiceEmbed))
         except discord.HTTPException as e:
+            print(voicelog_messageID)
             print(f"vclog_message:\n{e.text}")
             sys.exit()
 
@@ -502,6 +509,7 @@ async def backupLogs():
             nicevclog_message = await(client.get_channel(logs_channelID).fetch_message(nicevoicelog_messageID))
             await(nicevclog_message.edit(embed=sortedVoiceEmbed))
         except discord.HTTPException as e:
+            print(nicevclog_message)
             print(f"nicevclog_message:\n{e.text}")
             sys.exit()
 
@@ -511,6 +519,8 @@ async def backupLogs():
             return
         else:
             print('yatta')
+    else:
+        print("Client isnt ready")
 
 
 
@@ -638,20 +648,23 @@ async def embedTiktok(message):
             url = word
             pass
 
-    ydl_opts = {'paths': {'home': "/TestVideo/"}, 'restrictfilenames': True}
+    ydl_opts = {'paths': {'home': "Media/"}, 'restrictfilenames': True}
     recordTime = datetime.datetime.now()
     path = f"{recordTime.second}{recordTime.microsecond}"
     ydl_opts['outtmpl'] = f"{path}%(title)s.%(ext)s"
 
-    YoutubeDL(ydl_opts).download(word)
+    YoutubeDL(ydl_opts).download(url)
     try:
         for file in os.listdir('Media'):
             if file.__contains__(path):
-                await(message.reply(content=discord.File(fp=f"/Media/{path}")))
-                return
+                await(message.reply(file=discord.File(fp=f"Media/{file}")))
+
     except discord.HTTPException as e:
         print(e)
-    await(message.reply(content="Something went wrong and its probably not my fault"))
+        if e.status == 413:
+            await(message.reply(content="File is too big!"))
+        else:
+            await(message.reply(content="Something went wrong and its probably not my fault"))
 
 async def makeSorted():
     currentTime = datetime.datetime.now()
