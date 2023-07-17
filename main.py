@@ -111,7 +111,7 @@ async def on_ready():
                 # print(message.embeds[0].title)
                 # print(message.embeds[0].description[3:len(message.embeds[0].description)-3])
                 break
-        print(textTimes)
+        #print(textTimes)
 
         for message in voicebackups:
             if message.embeds[0].title.__contains__("```VOICE LOG"):
@@ -120,7 +120,7 @@ async def on_ready():
                 # print(message.embeds[0].title)
                 # print(message.embeds[0].description[3:len(message.embeds[0].description)-3])
                 break
-        print(vcTimes)
+        #print(vcTimes)
         if textTimes == {} or vcTimes == {}:
             print("Something is wrong so we dont even get starting privileges")
             sys.exit()
@@ -408,12 +408,13 @@ async def backupLogs():
         textLogs = [message async for message in textBackupChannel.history(limit=6)]
         for message in textLogs:
             if message.embeds[0].title.__contains__("```TEXT LOG"):
-                oldTextTime = message
+                oldTextTime = ast.literal_eval(message.embeds[0].description[3:len(message.embeds[0].description)-3])
 
         voiceLogs = [message async for message in voiceBackupChannel.history(limit=6)]
         for message in voiceLogs:
             if message.embeds[0].title.__contains__("```VOICE LOG"):
-                    oldVcTime = message
+                oldVcTime = ast.literal_eval(message.embeds[0].description[3:len(message.embeds[0].description)-3])
+
 
         if textTimes != oldTextTime:
             try:
@@ -428,10 +429,10 @@ async def backupLogs():
             sortedTextString += '```'
             sortedTextEmbed = discord.Embed(title=f'```SORTED TEXT LOG - {recordTime.strftime("%d-%b %H:%M")}```', description=sortedTextString)
 
-        try:
-            await(textBackupChannel.send(embed=sortedTextEmbed))
-        except discord.HTTPException as e:
-            print(e.text)
+            try:
+                await(textBackupChannel.send(embed=sortedTextEmbed))
+            except discord.HTTPException as e:
+                print(e.text)
 
         for guild in client.guilds:
             for channel in guild.voice_channels:
@@ -445,6 +446,7 @@ async def backupLogs():
             niceString += f"{x}, {v}\n"
         voiceEmbed = discord.Embed(title=f'```VOICE LOG - {recordTime.strftime("%d-%b %H:%M")}```', description=f"```{vcTimes}```")
         sortedVoiceEmbed = discord.Embed(title=f'```SORTED VOICE LOG - {recordTime.strftime("%d-%b %H:%M")}```', description=f"```{niceString}```")
+
 
         if vcTimes != oldVcTime:
             try:
@@ -708,6 +710,14 @@ async def on_member_remove(member):
         leaveEmbed.add_field(name='Message Author', value=f'{member.mention}', inline=False)
         leaveEmbed.set_footer(text=f'{member.name}#{member.discriminator} • {timestamp}')
         await channel.send(embed=leaveEmbed)
+
+
+@client.event
+async def on_presence_update(before, after):
+    if before.id == drem and after.status == 'offline':
+        print("This man went offline")
+        await(client.get_channel(botTimeID).send(content=f"Ain't no waaaaaaaaaaaaaaaaaay this mf {client.get_user(drem).mention} is offline rn"))
+
 
 
 @client.event
