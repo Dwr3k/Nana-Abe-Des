@@ -59,6 +59,9 @@ voicebackup_channelID = -1
 
 drem = 201866951683735552
 
+current_nicetextlog_messageID = -1
+current_nicevoicelog_messageID = -1
+
 profiles = {}
 # options = Options()
 # options.add_argument('--headless')
@@ -108,6 +111,7 @@ async def on_ready():
             if message.embeds[0].title.__contains__("```TEXT LOG"):
                 textTimes = ast.literal_eval(message.embeds[0].description[3:len(message.embeds[0].description)-3])
                 print(f"Using {message.embeds[0].title}")
+
                 # print(message.embeds[0].title)
                 # print(message.embeds[0].description[3:len(message.embeds[0].description)-3])
                 break
@@ -516,10 +520,10 @@ async def embedInstagram(message):
     # print('Detected instagram reel')
 
     r = requests.get(instaURL)
-    print(r)
+    #print(r)
     response = r.content
     response = response.decode(r.encoding)
-    print(response)
+    #print(response)
 
 
     urls = re.findall(r'("url":"https:\\\/\\\/scontent.+?})|("contentUrl":"https:\\\/\\\/scontent.+?")', response)
@@ -563,7 +567,7 @@ async def embedInstagram(message):
         await(message.reply(content="Broke bum tf you tryna make me post"))
     else:
         try:
-            await(message.reply(files=sendFiles))
+            await(message.reply(files=sendFiles, mention_author=False))
             for file in os.listdir('Media'):
                 os.remove(f'Media\\{file}')
         except discord.HTTPException as funny:
@@ -607,7 +611,7 @@ async def embedIfunny(message):
                 f.write(chunk)
 
     try:
-        await(message.reply(file=discord.File(fp=mediaPath)))
+        await(message.reply(file=discord.File(fp=mediaPath), mention_author=False))
         for file in os.listdir('Media'):
             os.remove(f'Media\\{file}')
     except discord.HTTPException as funny:
