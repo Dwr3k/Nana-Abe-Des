@@ -321,12 +321,11 @@ async def on_message(message):
         elif message.content == '%usamin backup':
             await(backupLogs())
 
-    if message.content == '%usamin report text':
-        textReport = await(client.get_channel(logs_channelID).fetch_message(nicetextlog_messageID))
-        await(message.channel.reply(content=textReport.content))
-    elif message.content == '%usamin report voice':
-        voiceReport = await(client.get_channel(logs_channelID).fetch_message(nicevoicelog_messageID))
-        await(message.channel.reply(content=voiceReport.content))
+    if '%usamin report text' in message.content:
+        await(makeReport(type='text', og_message=message, show=message.content))
+    elif '%usamin report voice' in message.content:
+        await(makeReport(type='voice', og_message=message, show=message.content))
+
 
     if message.channel.name not in ignoreChannels and (message.author.name not in ignoreNames):
         if getFull(message.author) not in textTimes:
@@ -345,6 +344,55 @@ async def on_message(message):
                         tempDict.update(wildWestID=((tempDict[wildWestID])[0]+1, (tempDict[wildWestID])[1]))
                     elif message.guild.id == jokercarID:
                         tempDict.update(jokercarID=((tempDict[jokercarID])[0]+1, (tempDict[jokercarID])[1]))
+
+async def makeReport(type, og_message, show):
+    returnMessage = None
+    if type == 'text':
+        textbackup_channel = await(client.fetch_channel(textbackup_channelID))
+        async for message in textbackup_channel.history(limit=4):
+            if 'SORTED TEXT LOG' in message.embeds[0].title:
+                returnMessage = message
+                break
+    elif type == 'voice':
+        voicebackup_channel = await(client.fetch_channel(voicebackup_channelID))
+        async for message in voicebackup_channel.history(limit=4):
+            if 'SORTED VOICE LOG' in message.embeds[0].title:
+                returnMessage = message
+                break
+
+    if returnMessage is None:
+        returnMessage = discord.Message(content='Couldnt find a valid message to report')
+        await(og_message.channel.send(returnMessage))
+        return
+
+    entries = returnMessage.embeds[0].description.split('\n')
+    if 'new' in show:
+        entries = list(filter(lambda x: '#0,' in x, entries))
+    elif 'old' in show:
+        entries = list(filter(lambda x: '#0,' not in x, entries))
+
+    if '```' in entries[0]:
+        entries[0] = entries[0][:3]
+        entries[len(entries)] = entries[len(entries)][:len(len(entries))]
+
+    descriptionString = '```'
+    for x in entries:
+        descriptionString += f'{x}\n'
+    descriptionString += '```'
+
+
+    embedTitle = returnMessage.embeds[0].title
+    reportEmbed = discord.Embed(title=embedTitle, description=descriptionString)
+    await(og_message.channel.send(embed=reportEmbed))
+
+
+
+
+
+
+
+
+
 
 
 async def confirm(message):
@@ -375,29 +423,7 @@ async def confirm(message):
         await(message.reply(f"{e.text}"))
 
 async def hotfix():
-
-    textstartID =        1129963503671840778
-    sortedtextstart =    1129963505043386488
-    voicestartID =       1129963505945169981
-    sortedvoicestartID = 1129963507023093890
-
-    textlogchannelID = 1130198947038773388
-    voicelogchannelID = 1130200616271106048
-
-
-    textlogchannel = client.get_channel(textlogchannelID)
-    voicelogchannel = client.get_channel(voicelogchannelID)
-    logsbackupchannel = client.get_channel(logsbackup_channelID)
-
-    textMessage = await(logsbackupchannel.fetch_message(textstartID))
-    sortedTextMessage = await(logsbackupchannel.fetch_message(sortedtextstart))
-    voiceMessage = await(logsbackupchannel.fetch_message(voicestartID))
-    sortedVoiceMessage = await(logsbackupchannel.fetch_message(sortedvoicestartID))
-
-    await(textlogchannel.send(content=textMessage.content, embed=textMessage.embeds[0]))
-    await(textlogchannel.send(content=sortedTextMessage.content, embed=sortedTextMessage.embeds[0]))
-    await(voicelogchannel.send(content=voiceMessage.content, embed=voiceMessage.embeds[0]))
-    await(voicelogchannel.send(content=sortedVoiceMessage.content, embed=sortedVoiceMessage.embeds[0]))
+    pass
 
 
 @tasks.loop(minutes=1)
@@ -798,6 +824,6 @@ formatter = logging.Formatter('[{asctime}] [{levelname:<8}] {name}: {message}', 
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-handler = logging.FileHandler(filename='times.txt', encoding='utf-8', mode='w')
+handler = logging.FileHandler(filename='discordLogs.log', encoding='utf-8', mode='a')
 client.run(token=token, log_handler=handler, log_level=logging.DEBUG)
 #client.run(token=token)
