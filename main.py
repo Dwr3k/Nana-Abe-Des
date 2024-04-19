@@ -415,7 +415,7 @@ async def confirm(message):
         replyEmbed = discord.Embed(title=embedTitle, description=f"```{confirmMessage.content}```", colour=discord.Colour.darker_grey())
         await(message.channel.send(embed=replyEmbed))
 
-        if len(message.embedsd) > 0:
+        if len(message.embeds) > 0:
             print("saw embeds")
             for embed in message.embeds:
                 await(message.channel.send(embed=embed))
@@ -590,7 +590,15 @@ async def embedInstagram(message):
             sendFiles.append(discord.File(fp=f'{mediaPath}.mp4'))
 
     if len(sendFiles) == 0:
-        await(message.reply(content="Broke bum tf you tryna make me post"))
+        drem_member = client.get_guild(jokercarID).get_member(drem)
+
+        #await(message.reply(content="Broke bum tf you tryna make me post"))
+        await(message.reply(content=f"Instagram changed their api and broke this feature and {drem_member.mention} hasnt bothered to fix this yet"))
+        await(message.channel.send(content="<a:uzuSpin:727951359428657303> <a:uzuSpin:727951359428657303> <a:uzuSpin:727951359428657303>"))
+        print(instaURL)
+        print(urls)
+        print(r)
+        print(response)
     else:
         try:
             await(message.reply(files=sendFiles, mention_author=False))
@@ -824,6 +832,6 @@ formatter = logging.Formatter('[{asctime}] [{levelname:<8}] {name}: {message}', 
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-handler = logging.FileHandler(filename='discordLogs.log', encoding='utf-8', mode='a')
+handler = logging.FileHandler(filename='discordLogs.log', encoding='utf-8', mode='w')
 client.run(token=token, log_handler=handler, log_level=logging.DEBUG)
 #client.run(token=token)
