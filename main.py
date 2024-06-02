@@ -24,7 +24,7 @@ perm_num = 8
 ouath2_url = 'https://discord.com/api/oauth2/authorize?client_id=636289011215761461&permissions=8&scope=bot'
 
 ignoreNames = ['Nana Abe des', 'SaucyBot', 'Mudae']
-ignoreChannels = ['logs', 'modlog', 'shh', 'bot-time', 'mmmm-i-love-manga', 'logs-backup']
+ignoreChannels = ['logs', 'modlog', 'shh', 'bot-time', 'mmmm-i-love-manga', 'logs-backup', 'usamin-fucking-died']
 jokercarThumb = 'https://cdn.discordapp.com/icons/636290342156500993/14b3a9b21d1be1e0a92a8cf7f4d58063.webp'
 
 jokercarID = 636290342156500993
@@ -540,6 +540,15 @@ async def embedInstagram(message):
             instaURL = phrase
 
     print(instaURL)
+
+    #Temp fix probably (he will never change it)
+    try:
+        ddURL = instaURL.replace("www.", "www.dd")
+        await(message.reply(content=ddURL))
+        return
+    except:
+        print("derrick_embed")
+
     if instaURL == '':
         print('something went wrong with finding the link')
         return
@@ -634,8 +643,22 @@ async def embedIfunny(message):
     response = r.content.decode(r.encoding)
 
     urls = re.findall(r'(content="https://img\.ifunny\.co/videos/.+?\.mp4")', response)
-    cleaned = urls[0]
-    cleaned = (cleaned[9:len(cleaned) - 1]).strip()
+    try:
+        cleaned = urls[0]
+        cleaned = (cleaned[9:len(cleaned) - 1]).strip()
+    except IndexError as e:
+        responseEmbed = discord.Embed(title=f'Error embedding for {ifunnyURL}', colour=discord.Colour.red())
+        responseEmbed.add_field(name=f"```{e}```", value="", inline=False)
+        responseFile = open("response.txt", "w", encoding="utf-8")
+        responseFile.write(response)
+        responseFile.close()
+
+
+
+        await(client.get_channel(1240297496656478329).send(embed=responseEmbed))
+        await(client.get_channel(1240297496656478329).send(file=discord.File(fp="response.txt")))
+
+
 
     mediaPath = f'Media/{random.randint(1, 1234567)}.mp4'
     r = requests.get(cleaned, stream=True)
