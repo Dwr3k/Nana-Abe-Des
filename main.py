@@ -15,13 +15,25 @@ import json
 import re
 from yt_dlp import YoutubeDL
 
+with open(os.environ["SECRETS_PATH"], "r") as secrets:
+    values = secrets.read().split("\n")
+secrets.close()
+
+secrets_dict = {}
+
+for line in values:
+    key = line.split()[0]
+    value = line.split()[1]
+    secrets_dict[key] = value
+
+secret = secrets_dict["secrets"]
+pub_key = secrets_dict["pub_key"]
+token = secrets_dict["token"]
+clientSecret = secrets_dict["clientSecret"]
+perm_num = secrets_dict["perm_num"]
+oauth2_url = secrets["oauth2_url"]
+
 id = 636289011215761461
-secret = 'QVO-pFuorq4lfhzumtALs505MGrajikQ'
-pub_key = '7c9bfa08c1ed0c3945774d19aefab2a457d50ade636c32ce3421867d978f1189'
-token = 'NjM2Mjg5MDExMjE1NzYxNDYx.G5BL9_.cHqoXpl-nmggJBYJ0unDqYjHr_iC2pGJXf9yII'
-clientSecret = 'BvKmvZlHPT1jNWAzIJG8a06olXs-4SVR'
-perm_num = 8
-ouath2_url = 'https://discord.com/api/oauth2/authorize?client_id=636289011215761461&permissions=8&scope=bot'
 
 ignoreNames = ['Nana Abe des', 'SaucyBot', 'Mudae']
 ignoreChannels = ['logs', 'modlog', 'shh', 'bot-time', 'mmmm-i-love-manga', 'logs-backup', 'usamin-fucking-died']
@@ -357,6 +369,7 @@ async def makeReport(type, og_message, show):
         voicebackup_channel = await(client.fetch_channel(voicebackup_channelID))
         async for message in voicebackup_channel.history(limit=4):
             if 'SORTED VOICE LOG' in message.embeds[0].title:
+                print("See voice")
                 returnMessage = message
                 break
 
