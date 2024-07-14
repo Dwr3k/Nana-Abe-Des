@@ -1,5 +1,4 @@
 import sys
-
 import discord
 import datetime
 import time
@@ -15,7 +14,7 @@ import json
 import re
 from yt_dlp import YoutubeDL
 
-with open(os.environ["SECRETS_PATH"], "r") as secrets:
+with open("secrets", "r") as secrets:
     values = secrets.read().split("\n")
 secrets.close()
 
@@ -26,12 +25,12 @@ for line in values:
     value = line.split()[1]
     secrets_dict[key] = value
 
-secret = secrets_dict["secrets"]
+secret = secrets_dict["secret"]
 pub_key = secrets_dict["pub_key"]
 token = secrets_dict["token"]
 clientSecret = secrets_dict["clientSecret"]
 perm_num = secrets_dict["perm_num"]
-oauth2_url = secrets["oauth2_url"]
+oauth2_url = secrets_dict["oauth2_url"]
 
 id = 636289011215761461
 
