@@ -12,7 +12,7 @@ import requests
 import os
 import json
 import re
-from yt_dlp import YoutubeDL
+import subprocess
 
 with open("secrets", "r") as secrets:
     values = secrets.read().split("\n")
@@ -55,9 +55,8 @@ userTimes = {}
 vcTimes = {}
 textTimes = {}
 
-constantsID = 1061736393086345296  #id of constants message in #logs
+constantsID = 1061736393086345296  # id of constants message in #logs
 constants = {}
-
 
 logs_channelID = 1061735975899893850
 logsbackup_channelID = -1
@@ -74,9 +73,7 @@ current_nicetextlog_messageID = -1
 current_nicevoicelog_messageID = -1
 
 profiles = {}
-# options = Options()
-# options.add_argument('--headless')
-# driver = webdriver.Edge(options=options)
+
 
 @client.event
 async def on_ready():
@@ -120,27 +117,25 @@ async def on_ready():
 
         for message in textbackups:
             if message.embeds[0].title.__contains__("```TEXT LOG"):
-                textTimes = ast.literal_eval(message.embeds[0].description[3:len(message.embeds[0].description)-3])
+                textTimes = ast.literal_eval(message.embeds[0].description[3:len(message.embeds[0].description) - 3])
                 print(f"Using {message.embeds[0].title}")
 
                 # print(message.embeds[0].title)
                 # print(message.embeds[0].description[3:len(message.embeds[0].description)-3])
                 break
-        #print(textTimes)
+        # print(textTimes)
 
         for message in voicebackups:
             if message.embeds[0].title.__contains__("```VOICE LOG"):
-                vcTimes = ast.literal_eval(message.embeds[0].description[3:len(message.embeds[0].description)-3])
+                vcTimes = ast.literal_eval(message.embeds[0].description[3:len(message.embeds[0].description) - 3])
                 print(f"Using {message.embeds[0].title}")
                 # print(message.embeds[0].title)
                 # print(message.embeds[0].description[3:len(message.embeds[0].description)-3])
                 break
-        #print(vcTimes)
+        # print(vcTimes)
         if textTimes == {} or vcTimes == {}:
             print("Something is wrong so we dont even get starting privileges")
             sys.exit()
-
-
 
         nicetextlog_messageID = await(client.get_channel(logs_channelID).fetch_message(nicetextlog_messageID))
         nicevoice_message = await(client.get_channel(logs_channelID).fetch_message(nicevoicelog_messageID))
@@ -155,12 +150,13 @@ async def on_ready():
         print(f'{guild.name.upper()} {guild.id}:')
         for channel in guild.voice_channels:
             for cons in channel.voice_states:
-                #print(getFull(guild.get_member(cons)))
+                # print(getFull(guild.get_member(cons)))
                 if getFull(guild.get_member(cons)) in vcTimes:
                     print(f'Found {getFull(guild.get_member(cons))} already in VC, starting timer')
                     userTimes[getFull(guild.get_member(cons))] = round(time.time(), 2)
                 else:
-                    print(f'Found {getFull(guild.get_member(cons))} already in VC and is (somehow) not in the list, starting timer')
+                    print(
+                        f'Found {getFull(guild.get_member(cons))} already in VC and is (somehow) not in the list, starting timer')
                     userTimes[getFull(guild.get_member(cons))] = round(time.time(), 2)
                     vcTimes[getFull(guild.get_member(cons))] = 0
         print(f'-----------------------------------------------------')
@@ -187,11 +183,12 @@ async def initStats():
                 allServersAndMembers.append(tempList)
 
         crossovers = set(allServersAndMembers[0]).intersection(*allServersAndMembers[1:])
-        #print(crossovers)
+        # print(crossovers)
         for x in crossovers:
-            if x not in profiles:#setup as in name, [serverID], numMessages, voiceTime
-                profiles[x] = {'name': discord.Guild.get_member(client.get_guild(wildWestID), x).display_name, jokercarID: (0,0), wildWestID:(0,0)}
-        #print(profiles)
+            if x not in profiles:  # setup as in name, [serverID], numMessages, voiceTime
+                profiles[x] = {'name': discord.Guild.get_member(client.get_guild(wildWestID), x).display_name,
+                               jokercarID: (0, 0), wildWestID: (0, 0)}
+        # print(profiles)
 
         await(profileMessage.edit(content=profiles))
 
@@ -204,14 +201,17 @@ async def on_voice_state_update(member, before, after):
             vcTimes[getFull(member)] = 0
         userTimes[getFull(member)] = round(time.time(), 2)
 
-        print(f'{member.name}#{member.discriminator} went from {before.channel} to {after.channel} in {after.channel.guild.name}')
+        print(
+            f'{member.name}#{member.discriminator} went from {before.channel} to {after.channel} in {after.channel.guild.name}')
 
     if after.channel is None and before.channel is not None:
-        print(f'{member.name}#{member.discriminator} went from {before.channel} to {after.channel} in {before.channel.guild.name}')
-        print(f'{member.name}#{member.discriminator} was in {before.channel} for {round(time.time() - userTimes[getFull(member)], 2)} seconds')
+        print(
+            f'{member.name}#{member.discriminator} went from {before.channel} to {after.channel} in {before.channel.guild.name}')
+        print(
+            f'{member.name}#{member.discriminator} was in {before.channel} for {round(time.time() - userTimes[getFull(member)], 2)} seconds')
 
         if getFull(member) in vcTimes:
-            vcTimes[getFull(member)] = round(vcTimes[getFull(member)] + time.time()-userTimes[getFull(member)], 2)
+            vcTimes[getFull(member)] = round(vcTimes[getFull(member)] + time.time() - userTimes[getFull(member)], 2)
             print(f'{getFull(member)} total time updated to {vcTimes[getFull(member)]} seconds')
 
             if member.id in profiles:
@@ -219,13 +219,15 @@ async def on_voice_state_update(member, before, after):
                 profileMessage = await(client.get_channel(botTimeID).fetch_message(constants['stats']))
 
                 if member.guild.id == wildWestID:
-                    tempDict.update(wildWestID = ((tempDict[wildWestID])[0], (tempDict[wildWestID])[1] + round(time.time() - userTimes[getFull(member)], 2)))
+                    tempDict.update(wildWestID=((tempDict[wildWestID])[0], (tempDict[wildWestID])[1] + round(
+                        time.time() - userTimes[getFull(member)], 2)))
                 elif member.guild.id == jokercarID:
-                    tempDict.update(jokercarID = ((tempDict[jokercarID])[0], (tempDict[jokercarID])[1]+ round(time.time() - userTimes[getFull(member)], 2)))
+                    tempDict.update(jokercarID=((tempDict[jokercarID])[0], (tempDict[jokercarID])[1] + round(
+                        time.time() - userTimes[getFull(member)], 2)))
                 await(profileMessage.edit(content=profiles))
 
         else:
-            vcTimes[getFull(member)] = round(time.time()-userTimes[getFull(member)], 2)
+            vcTimes[getFull(member)] = round(time.time() - userTimes[getFull(member)], 2)
             print(f'{getFull(member)} added to list with time {vcTimes[getFull(member)]}')
 
 
@@ -246,8 +248,7 @@ async def on_message(message):
     elif message.content.__contains__('https://ifunny.co'):
         await(embedIfunny(message))
     elif message.content.__contains__('https://www.tiktok.com'):
-        pass
-        #await(embedTiktok(message))
+        await(embedTiktok(message))
 
     if message.author.name in ['dwr3k', 'Nana Abe des', 'dooki6']:
         if message.content.__contains__('%usamin mimic'):
@@ -255,16 +256,21 @@ async def on_message(message):
             await(message.delete())
         elif message.content == '%usamin record':
             for guild in client.guilds:
-                #print(f'{guild.name} {guild.id}\n')
+                # print(f'{guild.name} {guild.id}\n')
                 for channel in guild.voice_channels:
                     for cons in channel.voice_states:
-                        #print(getFull(guild.get_member(cons)))
+                        # print(getFull(guild.get_member(cons)))
                         if getFull(guild.get_member(cons)) in vcTimes:
-                            print(f'{getFull(guild.get_member(cons))} total time updated to {vcTimes[getFull(guild.get_member(cons))]} seconds')
-                            vcTimes[getFull(guild.get_member(cons))] = round(vcTimes[getFull(guild.get_member(cons))] + time.time() - userTimes[getFull(guild.get_member(cons))], 2)
+                            print(
+                                f'{getFull(guild.get_member(cons))} total time updated to {vcTimes[getFull(guild.get_member(cons))]} seconds')
+                            vcTimes[getFull(guild.get_member(cons))] = round(
+                                vcTimes[getFull(guild.get_member(cons))] + time.time() - userTimes[
+                                    getFull(guild.get_member(cons))], 2)
                         else:
-                            vcTimes[getFull(guild.get_member(cons))] = round(time.time() - userTimes[getFull(guild.get_member(cons))], 2)
-                            print(f'{getFull(guild.get_member(cons))} added to list with time {vcTimes[getFull(guild.get_member(cons))]}')
+                            vcTimes[getFull(guild.get_member(cons))] = round(
+                                time.time() - userTimes[getFull(guild.get_member(cons))], 2)
+                            print(
+                                f'{getFull(guild.get_member(cons))} added to list with time {vcTimes[getFull(guild.get_member(cons))]}')
                         userTimes[getFull(guild.get_member(cons))] = round(time.time(), 2)
             await(voicelog_message.edit(content=vcTimes))
             await(message.delete())
@@ -277,7 +283,7 @@ async def on_message(message):
             if len(words) != 5 or words[4] not in re.findall("[\d]+", message.content):
                 return
             newConstant = int(words[4])
-            constants[words[3]] = newConstant#what the hell does this line do (it was very obvious)
+            constants[words[3]] = newConstant  # what the hell does this line do (it was very obvious)
 
             try:
                 await(message.reply(content=f'Constant {words[3]}: {constants[words[3]]} added!'))
@@ -337,24 +343,25 @@ async def on_message(message):
     elif '%usamin report voice' in message.content:
         await(makeReport(type='voice', og_message=message, show=message.content))
 
-
     if message.channel.name not in ignoreChannels and (message.author.name not in ignoreNames):
         if getFull(message.author) not in textTimes:
             textTimes[getFull(message.author)] = 1, f'{currentTime}'
             print(f'added {getFull(message.author)} to textTimes [{textTimes[getFull(message.author)]}]')
         else:
             if textTimes[getFull(message.author)][1] != f'{currentTime}':
-                textTimes[getFull(message.author)] = textTimes[getFull(message.author)][0]+1, f'{currentTime}'
-                print(f'+1 {getFull(message.author)} at {currentTime} in {message.channel.name} [{textTimes[getFull(message.author)]}]')
+                textTimes[getFull(message.author)] = textTimes[getFull(message.author)][0] + 1, f'{currentTime}'
+                print(
+                    f'+1 {getFull(message.author)} at {currentTime} in {message.channel.name} [{textTimes[getFull(message.author)]}]')
 
                 if message.author.id in profiles:
                     print(f'{message.author.id} entering')
                     tempDict = profiles[message.author.id]
 
                     if message.guild.id == wildWestID:
-                        tempDict.update(wildWestID=((tempDict[wildWestID])[0]+1, (tempDict[wildWestID])[1]))
+                        tempDict.update(wildWestID=((tempDict[wildWestID])[0] + 1, (tempDict[wildWestID])[1]))
                     elif message.guild.id == jokercarID:
-                        tempDict.update(jokercarID=((tempDict[jokercarID])[0]+1, (tempDict[jokercarID])[1]))
+                        tempDict.update(jokercarID=((tempDict[jokercarID])[0] + 1, (tempDict[jokercarID])[1]))
+
 
 async def makeReport(type, og_message, show):
     returnMessage = None
@@ -392,19 +399,9 @@ async def makeReport(type, og_message, show):
         descriptionString += f'{x}\n'
     descriptionString += '```'
 
-
     embedTitle = returnMessage.embeds[0].title
     reportEmbed = discord.Embed(title=embedTitle, description=descriptionString)
     await(og_message.channel.send(embed=reportEmbed))
-
-
-
-
-
-
-
-
-
 
 
 async def confirm(message):
@@ -424,7 +421,8 @@ async def confirm(message):
         if confirmMessage is None:
             raise discord.HTTPException("Couldnt get message ig")
 
-        replyEmbed = discord.Embed(title=embedTitle, description=f"```{confirmMessage.content}```", colour=discord.Colour.darker_grey())
+        replyEmbed = discord.Embed(title=embedTitle, description=f"```{confirmMessage.content}```",
+                                   colour=discord.Colour.darker_grey())
         await(message.channel.send(embed=replyEmbed))
 
         if len(message.embeds) > 0:
@@ -434,6 +432,7 @@ async def confirm(message):
     except discord.HTTPException as e:
         await(message.reply(f"{e.text}"))
 
+
 async def hotfix():
     pass
 
@@ -442,7 +441,8 @@ async def hotfix():
 async def backupLogs():
     if client.is_ready():
         recordTime = datetime.datetime.now()
-        textEmbed = discord.Embed(title=f'```TEXT LOG - {recordTime.strftime("%d-%b %H:%M")}```', description=f"```{textTimes}```")
+        textEmbed = discord.Embed(title=f'```TEXT LOG - {recordTime.strftime("%d-%b %H:%M")}```',
+                                  description=f"```{textTimes}```")
 
         textBackupChannel = client.get_channel(textbackup_channelID)
         voiceBackupChannel = client.get_channel(voicebackup_channelID)
@@ -450,13 +450,12 @@ async def backupLogs():
         textLogs = [message async for message in textBackupChannel.history(limit=6)]
         for message in textLogs:
             if message.embeds[0].title.__contains__("```TEXT LOG"):
-                oldTextTime = ast.literal_eval(message.embeds[0].description[3:len(message.embeds[0].description)-3])
+                oldTextTime = ast.literal_eval(message.embeds[0].description[3:len(message.embeds[0].description) - 3])
 
         voiceLogs = [message async for message in voiceBackupChannel.history(limit=6)]
         for message in voiceLogs:
             if message.embeds[0].title.__contains__("```VOICE LOG"):
-                oldVcTime = ast.literal_eval(message.embeds[0].description[3:len(message.embeds[0].description)-3])
-
+                oldVcTime = ast.literal_eval(message.embeds[0].description[3:len(message.embeds[0].description) - 3])
 
         if textTimes != oldTextTime:
             try:
@@ -469,7 +468,8 @@ async def backupLogs():
             for x in sortedText:
                 sortedTextString += f'{x}, {sortedText[x]}\n'
             sortedTextString += '```'
-            sortedTextEmbed = discord.Embed(title=f'```SORTED TEXT LOG - {recordTime.strftime("%d-%b %H:%M")}```', description=sortedTextString)
+            sortedTextEmbed = discord.Embed(title=f'```SORTED TEXT LOG - {recordTime.strftime("%d-%b %H:%M")}```',
+                                            description=sortedTextString)
 
             try:
                 await(textBackupChannel.send(embed=sortedTextEmbed))
@@ -479,16 +479,20 @@ async def backupLogs():
         for guild in client.guilds:
             for channel in guild.voice_channels:
                 for cons in channel.voice_states:
-                    vcTimes[getFull(guild.get_member(cons))] = round(vcTimes[getFull(guild.get_member(cons))] + time.time() - userTimes[getFull(guild.get_member(cons))], 2)
+                    vcTimes[getFull(guild.get_member(cons))] = round(
+                        vcTimes[getFull(guild.get_member(cons))] + time.time() - userTimes[
+                            getFull(guild.get_member(cons))], 2)
                     userTimes[getFull(guild.get_member(cons))] = round(time.time(), 2)
 
-        deltaedVoice = {k: str(datetime.timedelta(seconds=v))[:len(str(datetime.timedelta(seconds=v)))-4] for k, v in vcTimes.items()}
+        deltaedVoice = {k: str(datetime.timedelta(seconds=v))[:len(str(datetime.timedelta(seconds=v))) - 4] for k, v in
+                        vcTimes.items()}
         niceString = ""
-        for x,v in deltaedVoice.items():
+        for x, v in deltaedVoice.items():
             niceString += f"{x}, {v}\n"
-        voiceEmbed = discord.Embed(title=f'```VOICE LOG - {recordTime.strftime("%d-%b %H:%M")}```', description=f"```{vcTimes}```")
-        sortedVoiceEmbed = discord.Embed(title=f'```SORTED VOICE LOG - {recordTime.strftime("%d-%b %H:%M")}```', description=f"```{niceString}```")
-
+        voiceEmbed = discord.Embed(title=f'```VOICE LOG - {recordTime.strftime("%d-%b %H:%M")}```',
+                                   description=f"```{vcTimes}```")
+        sortedVoiceEmbed = discord.Embed(title=f'```SORTED VOICE LOG - {recordTime.strftime("%d-%b %H:%M")}```',
+                                         description=f"```{niceString}```")
 
         if vcTimes != oldVcTime:
             try:
@@ -539,11 +543,10 @@ async def backupLogs():
         print("Client isnt ready")
 
 
-
-
 async def updateConstantPlace():
     m = await(client.get_channel(logs_channelID).fetch_message(1061736393086345296))
     await(m.edit(content=constants))
+
 
 async def embedInstagram(message):
     instaURL = ''
@@ -553,7 +556,7 @@ async def embedInstagram(message):
 
     print(instaURL)
 
-    #Temp fix probably (he will never change it)
+    # Temp fix probably (he will never change it)
     try:
         ddURL = instaURL.replace("www.", "www.dd")
         await(message.reply(content=ddURL))
@@ -567,11 +570,10 @@ async def embedInstagram(message):
     # print('Detected instagram reel')
 
     r = requests.get(instaURL)
-    #print(r)
+    # print(r)
     response = r.content
     response = response.decode(r.encoding)
-    #print(response)
-
+    # print(response)
 
     urls = re.findall(r'("url":"https:\\\/\\\/scontent.+?})|("contentUrl":"https:\\\/\\\/scontent.+?")', response)
     for i in range(len(urls)):
@@ -613,9 +615,11 @@ async def embedInstagram(message):
     if len(sendFiles) == 0:
         drem_member = client.get_guild(jokercarID).get_member(drem)
 
-        #await(message.reply(content="Broke bum tf you tryna make me post"))
-        await(message.reply(content=f"Instagram changed their api and broke this feature and {drem_member.mention} hasnt bothered to fix this yet"))
-        await(message.channel.send(content="<a:uzuSpin:727951359428657303> <a:uzuSpin:727951359428657303> <a:uzuSpin:727951359428657303>"))
+        # await(message.reply(content="Broke bum tf you tryna make me post"))
+        await(message.reply(
+            content=f"Instagram changed their api and broke this feature and {drem_member.mention} hasnt bothered to fix this yet"))
+        await(message.channel.send(
+            content="<a:uzuSpin:727951359428657303> <a:uzuSpin:727951359428657303> <a:uzuSpin:727951359428657303>"))
         print(instaURL)
         print(urls)
         print(r)
@@ -639,7 +643,6 @@ async def embedInstagram(message):
 
 
 async def embedIfunny(message):
-
     ifunnyURL = ''
     for phrase in message.content.split():
         if phrase.__contains__('https://ifunny.co/video/'):
@@ -649,7 +652,8 @@ async def embedIfunny(message):
         print('Cant find ifunny link')
         return
 
-    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.79 Safari/537.36'}
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.79 Safari/537.36'}
 
     r = requests.get(url=ifunnyURL, headers=headers)
     response = r.content.decode(r.encoding)
@@ -665,12 +669,8 @@ async def embedIfunny(message):
         responseFile.write(response)
         responseFile.close()
 
-
-
         await(client.get_channel(1240297496656478329).send(embed=responseEmbed))
         await(client.get_channel(1240297496656478329).send(file=discord.File(fp="response.txt")))
-
-
 
     mediaPath = f'Media/{random.randint(1, 1234567)}.mp4'
     r = requests.get(cleaned, stream=True)
@@ -693,32 +693,38 @@ async def embedIfunny(message):
 
         await(message.reply(content=f'Can\'t embed, {funny.text} (yikes!)'))
 
+
 async def embedTiktok(message):
     words = re.findall("[\S]+", message.content)
-    url = ""
+    tiktokURL = ""
 
     for word in words:
         if word.__contains__("https://www.tiktok.com"):
-            url = word
+            tiktokURL = word
             pass
 
-    ydl_opts = {'paths': {'home': "Media/"}, 'restrictfilenames': True}
-    recordTime = datetime.datetime.now()
-    path = f"{recordTime.second}{recordTime.microsecond}"
-    ydl_opts['outtmpl'] = f"{path}%(title)s.%(ext)s"
+    getTiktokID = subprocess.run(["yt-dlp", "--print", "id", f"{tiktokURL}"],
+                                 stdout=subprocess.PIPE,
+                                 universal_newlines=True)
+    print(getTiktokID.stdout)
+    tiktokID = getTiktokID.stdout.strip()
 
-    YoutubeDL(ydl_opts).download(url)
+    print(f"Downloading: {tiktokURL} as {tiktokID}")
+    subprocess.run(
+        ["yt-dlp", "-o", "%(id)s.%(ext)s", "-P", "C:\\Users\\01 Dwreck\\Desktop\\NanaAbeDes\\Media", f"{tiktokURL}"])
+
     try:
-        for file in os.listdir('Media'):
-            if file.__contains__(path):
-                await(message.reply(file=discord.File(fp=f"Media/{file}")))
-
+        await(message.reply(file=discord.File(fp=f"Media/{tiktokID}.mp4")))
     except discord.HTTPException as e:
         print(e)
         if e.status == 413:
             await(message.reply(content="File is too big!"))
         else:
             await(message.reply(content="Something went wrong and its probably not my fault"))
+
+    for file in os.listdir('Media'):
+        os.remove(f"Media/{tiktokID}.mp4")
+
 
 async def makeSorted():
     currentTime = datetime.datetime.now()
@@ -741,7 +747,6 @@ async def sortVoice():
 
 
 async def mimic(channel, message):
-
     try:
         if len(message) < 2000:
             await(channel.send(content=message))
@@ -749,6 +754,7 @@ async def mimic(channel, message):
             await(channel.send(content=f"Message too big! ({len(message)})"))
     except discord.HTTPException as e:
         print(e.text)
+
 
 async def updateConstants():
     global constants
@@ -764,7 +770,8 @@ async def on_member_join(member):
         timestamp = f'{currentTime.month}/{currentTime.day}/{currentTime.year} {currentTime.hour}:{currentTime.minute}'
         channel = client.get_channel(modChannelID)  # currently id for bot-time
 
-        joinEmbed = discord.Embed(title=f'Member {member.name}#{member.discriminator} joined', colour=discord.Colour.purple())
+        joinEmbed = discord.Embed(title=f'Member {member.name}#{member.discriminator} joined',
+                                  colour=discord.Colour.purple())
         joinEmbed.set_thumbnail(url=member.display_avatar)
         joinEmbed.add_field(name='Message Author', value=f'{member.mention}', inline=False)
         joinEmbed.set_footer(text=f'{member.name}#{member.discriminator} • {timestamp}')
@@ -778,7 +785,8 @@ async def on_member_remove(member):
         timestamp = f'{currentTime.month}/{currentTime.day}/{currentTime.year} {currentTime.hour}:{currentTime.minute}'
         channel = client.get_channel(modChannelID)  # currently id for bot-time
 
-        leaveEmbed = discord.Embed(title=f'Member {member.name}#{member.discriminator} removed', colour=discord.Colour.red())
+        leaveEmbed = discord.Embed(title=f'Member {member.name}#{member.discriminator} removed',
+                                   colour=discord.Colour.red())
         leaveEmbed.set_thumbnail(url=member.display_avatar)
         leaveEmbed.add_field(name='Message Author', value=f'{member.mention}', inline=False)
         leaveEmbed.set_footer(text=f'{member.name}#{member.discriminator} • {timestamp}')
@@ -789,17 +797,16 @@ async def on_member_remove(member):
 async def on_presence_update(before, after):
     if before.id == drem and after.status == 'offline':
         print("This man went offline")
-        await(client.get_channel(botTimeID).send(content=f"Ain't no waaaaaaaaaaaaaaaaaay this mf {client.get_user(drem).mention} is offline rn"))
-
+        await(client.get_channel(botTimeID).send(
+            content=f"Ain't no waaaaaaaaaaaaaaaaaay this mf {client.get_user(drem).mention} is offline rn"))
 
 
 @client.event
 async def on_message_delete(message):
-
     currentTime = datetime.datetime.now()
     timestamp = f'{currentTime.month}/{currentTime.day}/{currentTime.year} {currentTime.hour}:{currentTime.minute}'
 
-    if message.channel.guild.id == wildWestID: #wildwest
+    if message.channel.guild.id == wildWestID:  # wildwest
         channel = client.get_channel(WWlogs)
     elif message.channel.guild.id == jokercarID:
         channel = client.get_channel(modChannelID)  # currently id for bot-time
@@ -838,7 +845,8 @@ async def on_message_edit(before, after):
     newAttach = newAttach.strip()
 
     if before.content != after.content and before.author.name not in ignoreNames:
-        editEmbed = discord.Embed(title=f'Message Updated in #{before.channel.name}', colour=discord.Colour.brand_green())
+        editEmbed = discord.Embed(title=f'Message Updated in #{before.channel.name}',
+                                  colour=discord.Colour.brand_green())
         editEmbed.set_thumbnail(url=before.author.display_avatar)
         editEmbed.add_field(name='Old Message', value=f'```{before.content}```', inline=False)
         if oldAttach != newAttach:
@@ -851,6 +859,7 @@ async def on_message_edit(before, after):
         editEmbed.add_field(name='Message Author', value=f'{before.author.mention}', inline=False)
         editEmbed.set_footer(text=f'{before.author.name}#{before.author.discriminator} • {timestamp}')
         await channel.send(embed=editEmbed)
+
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
@@ -869,4 +878,4 @@ logger.addHandler(handler)
 
 handler = logging.FileHandler(filename='discordLogs.log', encoding='utf-8', mode='w')
 client.run(token=token, log_handler=handler, log_level=logging.DEBUG)
-#client.run(token=token)
+# client.run(token=token)
